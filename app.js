@@ -716,7 +716,7 @@ function drawWeightChart(records, targetWeight) {
   const context = canvas.getContext("2d");
   const width = canvas.width;
   const height = canvas.height;
-  const padding = 40;
+  const padding = 90;
 
   context.clearRect(0, 0, width, height);
   context.fillStyle = "#0f1723";
@@ -732,8 +732,8 @@ function drawWeightChart(records, targetWeight) {
 
   if (records.length === 0) {
     context.fillStyle = "#8b949e";
-    context.font = "16px Segoe UI";
-    context.fillText("No data yet", padding + 10, padding + 20);
+    context.font = "48px Segoe UI";
+    context.fillText("No data yet", padding + 10, padding + 50);
     return;
   }
 
@@ -776,21 +776,21 @@ function drawWeightChart(records, targetWeight) {
     context.stroke();
     context.setLineDash([]);
     context.fillStyle = "#6ea8fe";
-    context.font = "14px Segoe UI";
-    context.fillText(`Target ${targetWeight}`, padding + 8, Math.max(padding + 14, targetY - 8));
+    context.font = "42px Segoe UI";
+    context.fillText(`Target ${targetWeight}`, padding + 8, Math.max(padding + 42, targetY - 10));
     context.restore();
   }
 
   context.fillStyle = "#e6edf3";
-  context.font = "14px Segoe UI";
+  context.font = "42px Segoe UI";
   context.fillText(`${minWeight.toFixed(1)}`, 8, height - padding);
-  context.fillText(`${maxWeight.toFixed(1)}`, 8, padding + 6);
+  context.fillText(`${maxWeight.toFixed(1)}`, 8, padding + 18);
 
   const first = records[0];
   const last = records[records.length - 1];
-  context.fillText(first.date, padding, height - 10);
+  context.fillText(first.date, padding, height - 20);
   const lastLabelWidth = context.measureText(last.date).width;
-  context.fillText(last.date, width - padding - lastLabelWidth, height - 10);
+  context.fillText(last.date, width - padding - lastLabelWidth, height - 20);
 }
 
 async function refreshDataView() {
