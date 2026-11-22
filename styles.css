@@ -99,7 +99,7 @@ h2 {
 }
 
 .new-entry-button {
-  margin: 0;
+  margin: 0 0 0.8rem 0;
   background: #8ec5ff;
   color: #081018;
 }
@@ -322,7 +322,7 @@ button.danger {
 }
 
 .summary {
-  margin: 0;
+  margin: 0 0 0.8rem 0;
 }
 
 .list {
