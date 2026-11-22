@@ -8,8 +8,19 @@ def expect(condition: bool, message: str) -> None:
         raise AssertionError(message)
 
 
+def detect_project_root() -> Path:
+    script_path = Path(__file__).resolve()
+    candidates = [script_path.parent, *script_path.parents]
+
+    for candidate in candidates:
+        if (candidate / "index.xhtml").exists() and (candidate / "app.js").exists():
+            return candidate
+
+    return script_path.parent
+
+
 def main() -> int:
-    root = Path(__file__).resolve().parents[1]
+    root = detect_project_root()
     index_path = root / "index.xhtml"
     css_path = root / "styles.css"
     js_path = root / "app.js"
