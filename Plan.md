@@ -27,9 +27,10 @@ No large tab title is shown inside each tab page.
 ### `CalEntry`
 - `id`
 - `date` (`YYYY-MM-DD`)
-- `itemTypeId`
+- `itemTypeId` (the type used to initialize this entry; used only to decide create-vs-reuse at save time and for suggestions, not as an authoritative back-reference — display always uses the entry's own snapshot fields below)
 - `quantity`
 - `createdAt` (`HH:MM`, auto-set on creation)
+- `customName` (snapshot of the type name at creation/edit time; independent of the item type's current `name`)
 - `calPerItem` (snapshot of calories per item at creation/edit time; independent of the item type's current `calPerUnit`)
 - `color` (snapshot of the color at creation/edit time; independent of the item type's current `color`)
 

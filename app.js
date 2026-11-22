@@ -645,7 +645,7 @@ async function refreshCalView() {
     copyButton.textContent = "⧉";
     copyButton.addEventListener("click", () => {
       openCalEntryModalForCreate({
-        typeName: itemType.name,
+        typeName: displayName,
         quantity: entry.quantity,
         date: todayString(),
         time: currentTimeString(),
@@ -925,6 +925,7 @@ async function saveCalEntryFromModal() {
       createdAt: selectedTime,
       calPerItem: roundedCalories,
       color: selectedColor,
+      customName: typeName,
     });
     return true;
   }
@@ -933,7 +934,7 @@ async function saveCalEntryFromModal() {
     date: selectedDate,
     itemTypeId: selectedItemType.id,
     quantity,
-    customName: "",
+    customName: typeName,
     createdAt: selectedTime,
     calPerItem: roundedCalories,
     color: selectedColor,
@@ -975,7 +976,7 @@ function openCalEntryModalForCreate(prefill = null) {
 function openCalEntryModalForEdit(entry) {
   const itemType = state.itemTypes.find((candidate) => candidate.id === entry.itemTypeId);
   ui.calEntryId.value = String(entry.id);
-  ui.calItemTypeText.value = itemType ? itemType.name : "";
+  ui.calItemTypeText.value = entry.customName || (itemType ? itemType.name : "");
   ui.calQuantity.value = String(entry.quantity);
   ui.calEntryDate.value = entry.date || state.selectedDate || todayString();
   ui.calEntryTime.value = normalizeTimeString(entry.createdAt) || currentTimeString();
