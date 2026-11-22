@@ -333,6 +333,23 @@ button.danger {
   text-overflow: ellipsis;
 }
 
+#item-type-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+#item-type-list .list-item {
+  flex: 0 1 auto;
+  width: auto;
+  max-width: 260px;
+}
+
+#item-type-list .cal-entry-label {
+  flex: 0 1 auto;
+  max-width: 200px;
+}
+
 .cal-entry-columns {
   display: grid;
   grid-template-columns: 64px 1fr 170px 90px 50px 50px;
