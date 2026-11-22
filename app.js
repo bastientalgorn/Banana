@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.12.0",
+    date: "2026-11-22",
+    summary: "Moved version/changelog into the Maintenance card (under Deep refresh) and added a Hide/Show toggle for the whole Maintenance box.",
+  },
+  {
     version: "1.11.0",
     date: "2026-11-22",
     summary: "Data tab now shows the app version and a changelog of the 5 most recent updates.",
@@ -29,11 +34,6 @@ const APP_CHANGELOG = [
     version: "1.8.0",
     date: "2026-11-22",
     summary: "Data tab: custom item types are listed before predefined ones, each with a color dot.",
-  },
-  {
-    version: "1.7.0",
-    date: "2026-11-22",
-    summary: "Added a \u00b1 sign-toggle button next to calorie fields, since Android keyboards often hide the minus key.",
   },
 ];
 const APP_VERSION = APP_CHANGELOG[0]?.version || "0.0.0";
@@ -146,6 +146,8 @@ const ui = {
   deepRefreshStatus: document.getElementById("deep-refresh-status"),
   appVersionNumber: document.getElementById("app-version-number"),
   changelogList: document.getElementById("changelog-list"),
+  maintenanceBody: document.getElementById("maintenance-body"),
+  maintenanceToggleBtn: document.getElementById("maintenance-toggle-btn"),
   listTemplate: document.getElementById("simple-list-item-template"),
 };
 
@@ -442,6 +444,12 @@ function bindUiEvents() {
 
   ui.deepRefreshBtn.addEventListener("click", () => {
     void performDeepRefresh();
+  });
+
+  ui.maintenanceToggleBtn.addEventListener("click", () => {
+    const isHidden = ui.maintenanceBody.classList.toggle("hidden");
+    ui.maintenanceToggleBtn.textContent = isHidden ? "Show" : "Hide";
+    ui.maintenanceToggleBtn.setAttribute("aria-expanded", String(!isHidden));
   });
 
   ui.itemTypeModalBackdrop.addEventListener("click", () => {
