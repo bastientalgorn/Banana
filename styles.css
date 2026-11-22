@@ -22,14 +22,18 @@ body {
   font-family: "Segoe UI", Roboto, sans-serif;
 }
 
+html {
+  font-size: 200%;
+}
+
 body {
   min-height: 100vh;
   padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
 }
 
 .app-shell {
-  width: 1080px;
-  max-width: 1080px;
+  width: 972px;
+  max-width: 972px;
   margin: 0 auto;
   padding: 0.6rem;
 }
@@ -53,7 +57,7 @@ body {
   border-radius: 999px;
   padding: 0.7rem 0.4rem;
   font-weight: 600;
-  min-height: 50px;
+  min-height: 100px;
 }
 
 .tab-button.active {
@@ -124,8 +128,8 @@ h2 {
 .date-picker-button {
   width: 50px;
   min-width: 50px;
-  height: 50px;
-  min-height: 50px;
+  height: 100px;
+  min-height: 100px;
   margin: 0;
 }
 
@@ -153,7 +157,7 @@ h2 {
   padding: 0.62rem 0.7rem;
   font-size: 1rem;
   white-space: nowrap;
-  min-height: 50px;
+  min-height: 100px;
   min-width: 50px;
 }
 
@@ -183,8 +187,8 @@ h2 {
 .qty-adjust-button {
   width: 50px;
   min-width: 50px;
-  height: 50px;
-  min-height: 50px;
+  height: 100px;
+  min-height: 100px;
   margin: 0;
   padding: 0;
   border-radius: 999px;
@@ -228,7 +232,7 @@ button {
   color: #081018;
   border: none;
   font-weight: 700;
-  min-height: 50px;
+  min-height: 100px;
   min-width: 50px;
 }
 
@@ -338,8 +342,8 @@ button.danger {
   margin: 0;
   width: 50px;
   min-width: 50px;
-  height: 50px;
-  min-height: 50px;
+  height: 100px;
+  min-height: 100px;
   padding: 0;
   border-radius: 999px;
   font-size: 1rem;
@@ -400,8 +404,8 @@ button.danger {
 .modal-panel {
   position: relative;
   z-index: 1;
-  width: 1000px;
-  max-width: 1000px;
+  width: 92vw;
+  max-width: 900px;
   margin-top: 0.45rem;
   background: var(--card);
   border: 1px solid var(--border);
