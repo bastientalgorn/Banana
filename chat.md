@@ -1,1 +1,0 @@
-When i do new entry, the focus is on "Type" before I even type anything. That means that the drop down menu is already there and masking everything. Can you wait until I type something in the type box before opening the drop down with suggestions? 
