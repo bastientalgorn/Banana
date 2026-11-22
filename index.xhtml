@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Banana Tracker</title>
   <link rel="icon" type="image/png" sizes="16x16" href="banana_icon_16.png" />
-  <link rel="stylesheet" href="styles.css?v=20261122f" />
+  <link rel="stylesheet" href="styles.css?v=20261122g" />
 </head>
 <body>
   <div class="app-shell">
@@ -66,7 +66,10 @@
             <input id="item-type-name" type="text" maxlength="80" autocomplete="off" required="required" />
 
             <label for="item-type-cal">Calories per unit</label>
-            <input id="item-type-cal" type="text" inputmode="decimal" pattern="-?[0-9]*\.?[0-9]*" required="required" />
+            <div class="type-row">
+              <input id="item-type-cal" type="text" inputmode="decimal" pattern="-?[0-9]*\.?[0-9]*" required="required" />
+              <button id="item-type-cal-sign-btn" type="button" class="qty-adjust-button" aria-label="Toggle positive/negative">±</button>
+            </div>
 
             <button type="submit">Create item type</button>
           </form>
@@ -106,8 +109,9 @@
           <datalist id="cal-item-type-list"></datalist>
         </div>
 
-        <div class="type-row one-column">
+        <div class="type-row">
           <input id="cal-item-cal" type="text" inputmode="decimal" pattern="-?[0-9]*\.?[0-9]*" placeholder="Calory per item" />
+          <button id="cal-item-cal-sign-btn" type="button" class="qty-adjust-button" aria-label="Toggle positive/negative">±</button>
         </div>
 
         <div class="quantity-row quantity-total-row">
@@ -145,11 +149,12 @@
           <input id="item-type-edit-name" type="text" maxlength="80" autocomplete="off" required="required" placeholder="Name" />
         </div>
 
-        <div class="quantity-row">
+        <div class="quantity-row five-columns">
           <span class="quantity-label">Quantity</span>
           <input id="item-type-edit-cal" type="text" inputmode="decimal" pattern="-?[0-9]*\.?[0-9]*" required="required" />
           <button id="item-type-cal-plus-btn" type="button" class="qty-adjust-button" aria-label="Increase quantity">+</button>
           <button id="item-type-cal-minus-btn" type="button" class="qty-adjust-button" aria-label="Decrease quantity">-</button>
+          <button id="item-type-edit-cal-sign-btn" type="button" class="qty-adjust-button" aria-label="Toggle positive/negative">±</button>
         </div>
 
         <div class="row-actions three-columns">
@@ -192,6 +197,6 @@
   </div>
 
   <script src="food_seed_data.js" type="application/javascript"></script>
-  <script src="app.js?v=20261122f" type="application/javascript"></script>
+  <script src="app.js?v=20261122g" type="application/javascript"></script>
 </body>
 </html>

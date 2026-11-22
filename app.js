@@ -65,6 +65,7 @@ const ui = {
   calItemTypeText: document.getElementById("cal-item-type-text"),
   calItemTypeList: document.getElementById("cal-item-type-list"),
   calItemCal: document.getElementById("cal-item-cal"),
+  calItemCalSignBtn: document.getElementById("cal-item-cal-sign-btn"),
   calQuantity: document.getElementById("cal-quantity"),
   calTotalCalories: document.getElementById("cal-total-calories"),
   calEntryDate: document.getElementById("cal-entry-date"),
@@ -95,6 +96,7 @@ const ui = {
   itemTypeForm: document.getElementById("item-type-form"),
   itemTypeName: document.getElementById("item-type-name"),
   itemTypeCal: document.getElementById("item-type-cal"),
+  itemTypeCalSignBtn: document.getElementById("item-type-cal-sign-btn"),
   targetsForm: document.getElementById("targets-form"),
   dailyCalorieTarget: document.getElementById("daily-calorie-target"),
   weightTarget: document.getElementById("weight-target"),
@@ -108,6 +110,7 @@ const ui = {
   itemTypeEditCal: document.getElementById("item-type-edit-cal"),
   itemTypeCalPlusBtn: document.getElementById("item-type-cal-plus-btn"),
   itemTypeCalMinusBtn: document.getElementById("item-type-cal-minus-btn"),
+  itemTypeEditCalSignBtn: document.getElementById("item-type-edit-cal-sign-btn"),
   itemTypeEditCancelBtn: document.getElementById("item-type-edit-cancel-btn"),
   itemTypeEditDeleteBtn: document.getElementById("item-type-edit-delete-btn"),
   deepRefreshBtn: document.getElementById("deep-refresh-btn"),
@@ -473,6 +476,19 @@ function bindUiEvents() {
     const current = Number(ui.itemTypeEditCal.value || "0");
     const safeValue = Number.isFinite(current) ? current : 0;
     ui.itemTypeEditCal.value = String(roundTo(safeValue - 1, 3));
+  });
+
+  ui.itemTypeEditCalSignBtn.addEventListener("click", () => {
+    toggleInputSign(ui.itemTypeEditCal);
+  });
+
+  ui.itemTypeCalSignBtn.addEventListener("click", () => {
+    toggleInputSign(ui.itemTypeCal);
+  });
+
+  ui.calItemCalSignBtn.addEventListener("click", () => {
+    toggleInputSign(ui.calItemCal);
+    refreshCalModalComputedFields();
   });
 }
 
@@ -1155,6 +1171,24 @@ function refreshCalModalComputedFields() {
     selectedDate.length > 0 &&
     selectedTime.length > 0;
   ui.calEntrySubmitBtn.disabled = !canSubmit;
+}
+
+function toggleInputSign(inputElement) {
+  const raw = String(inputElement.value || "").trim();
+  if (!raw) {
+    inputElement.value = "-";
+    inputElement.focus();
+    return;
+  }
+
+  if (raw.startsWith("-")) {
+    inputElement.value = raw.slice(1);
+  } else if (raw.startsWith("+")) {
+    inputElement.value = `-${raw.slice(1)}`;
+  } else {
+    inputElement.value = `-${raw}`;
+  }
+  inputElement.focus();
 }
 
 function parseCaloryPerItemInput(rawValue) {

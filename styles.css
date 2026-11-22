@@ -170,6 +170,10 @@ h2 {
   margin-top: 0.275rem;
 }
 
+.quantity-row.five-columns {
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+}
+
 .quantity-total-row {
   grid-template-columns: auto minmax(0, 1fr) 50px 50px;
   grid-template-areas:
