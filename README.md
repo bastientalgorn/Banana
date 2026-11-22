@@ -4,7 +4,7 @@ Mobile-first local web app to track daily calories and body weight.
 
 ## Features
 - 3 tabs: `Cal`, `Progress`, `Data`
-- Local persistence with IndexedDB (`itemTypes`, `calEntries`, `weightEntries`)
+- Local persistence with IndexedDB (`templates`, `calEntries`, `weightEntries`)
 - Preloaded ~100 common food templates generated from USDA Foundation Foods JSON
 - Calorie entries per day with quantity and optional name override
 - Template CRUD with positive/negative calories

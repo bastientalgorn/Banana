@@ -37,7 +37,7 @@ def main() -> int:
     expect('<section id="tab-data"' in index_content, "Data tab section missing")
     expect('id="weight-chart"' in index_content, "Weight chart canvas missing")
 
-    for store_name in ["itemTypes", "calEntries", "weightEntries"]:
+    for store_name in ["templates", "calEntries", "weightEntries"]:
         expect(store_name in js_content, f"Store name {store_name} missing in app.js")
 
     expect(re.search(r"indexedDB\.open\(", js_content) is not None, "IndexedDB init missing")

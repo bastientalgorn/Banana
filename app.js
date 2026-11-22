@@ -1,6 +1,6 @@
 const DB_NAME = "bananaTrackerDB";
-const DB_VERSION = 2;
-const STORE_TEMPLATES = "itemTypes";
+const DB_VERSION = 3;
+const STORE_TEMPLATES = "templates";
 const STORE_CAL_ENTRIES = "calEntries";
 const STORE_WEIGHT_ENTRIES = "weightEntries";
 const STORE_SETTINGS = "settings";
@@ -10,6 +10,11 @@ const SETTING_WEIGHT_TARGET = "weightTarget";
 const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
+  {
+    version: "1.15.0",
+    date: "2026-11-22",
+    summary: "Maintenance: added a \"Clear all history\" button (requires 10 presses to confirm) that wipes calorie and weight entries; renamed the IndexedDB store to \"templates\" (no backward compatibility needed).",
+  },
   {
     version: "1.14.0",
     date: "2026-11-22",
@@ -159,6 +164,8 @@ const ui = {
   templateEditColorPickerRow: document.getElementById("template-edit-color-picker-row"),
   deepRefreshBtn: document.getElementById("deep-refresh-btn"),
   deepRefreshStatus: document.getElementById("deep-refresh-status"),
+  clearAllHistoryBtn: document.getElementById("clear-all-history-btn"),
+  clearAllHistoryStatus: document.getElementById("clear-all-history-status"),
   changelogList: document.getElementById("changelog-list"),
   maintenanceBody: document.getElementById("maintenance-body"),
   maintenanceToggleBtn: document.getElementById("maintenance-toggle-btn"),
@@ -460,6 +467,10 @@ function bindUiEvents() {
     void performDeepRefresh();
   });
 
+  ui.clearAllHistoryBtn.addEventListener("click", () => {
+    void handleClearAllHistoryClick();
+  });
+
   ui.maintenanceToggleBtn.addEventListener("click", () => {
     const isHidden = ui.maintenanceBody.classList.toggle("hidden");
     ui.maintenanceToggleBtn.textContent = isHidden ? "Show" : "Hide";
@@ -618,6 +629,64 @@ async function performDeepRefresh() {
   const bustedUrl = new URL(window.location.href);
   bustedUrl.searchParams.set("_deepRefresh", String(Date.now()));
   window.location.replace(bustedUrl.toString());
+}
+
+const CLEAR_ALL_HISTORY_PRESSES_REQUIRED = 10;
+const CLEAR_ALL_HISTORY_RESET_DELAY_MS = 4000;
+
+async function handleClearAllHistoryClick() {
+  const button = ui.clearAllHistoryBtn;
+  const statusNode = ui.clearAllHistoryStatus;
+
+  const pressCount = (Number(button.dataset.pressCount) || 0) + 1;
+  button.dataset.pressCount = String(pressCount);
+
+  if (button._clearHistoryResetTimer) {
+    clearTimeout(button._clearHistoryResetTimer);
+  }
+
+  if (pressCount >= CLEAR_ALL_HISTORY_PRESSES_REQUIRED) {
+    button.dataset.pressCount = "0";
+    button.disabled = true;
+    if (statusNode) {
+      statusNode.textContent = "Clearing all history...";
+    }
+
+    try {
+      await clearAllHistory();
+      if (statusNode) {
+        statusNode.textContent = "All history cleared.";
+      }
+    } catch (error) {
+      console.error("Clear all history failed", error);
+      if (statusNode) {
+        statusNode.textContent = "Failed to clear history.";
+      }
+    } finally {
+      button.disabled = false;
+    }
+    return;
+  }
+
+  const remaining = CLEAR_ALL_HISTORY_PRESSES_REQUIRED - pressCount;
+  if (statusNode) {
+    statusNode.textContent = `Press ${remaining} more time${remaining === 1 ? "" : "s"} to confirm.`;
+  }
+
+  button._clearHistoryResetTimer = setTimeout(() => {
+    button.dataset.pressCount = "0";
+    if (statusNode) {
+      statusNode.textContent = "";
+    }
+  }, CLEAR_ALL_HISTORY_RESET_DELAY_MS);
+}
+
+async function clearAllHistory() {
+  await clearStore(STORE_CAL_ENTRIES);
+  await clearStore(STORE_WEIGHT_ENTRIES);
+  await refreshCalView();
+  await refreshWeightView();
+  await refreshDataView();
 }
 
 function syncTemplateSelects() {
@@ -1520,6 +1589,14 @@ function listAll(storeName) {
     const request = transaction(storeName, "readonly").getAll();
     request.onsuccess = () => resolve(request.result || []);
     request.onerror = () => reject(request.error || new Error("List failed."));
+  });
+}
+
+function clearStore(storeName) {
+  return new Promise((resolve, reject) => {
+    const request = transaction(storeName, "readwrite").clear();
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error || new Error("Clear failed."));
   });
 }
 
