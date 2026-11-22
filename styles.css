@@ -405,6 +405,43 @@ button.danger {
   line-height: 1;
 }
 
+.autocomplete-wrap {
+  position: relative;
+}
+
+.autocomplete-list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 0.2rem);
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0;
+  background: #0f1723;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+}
+
+.autocomplete-item {
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.highlighted {
+  background: var(--accent-2);
+  color: #081018;
+}
+
 .item-main {
   font-weight: 600;
 }
