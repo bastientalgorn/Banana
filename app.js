@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.15.2",
+    date: "2026-11-22",
+    summary: "Clear all history: the \"press N more times\" countdown now shows directly on the button itself.",
+  },
+  {
     version: "1.15.1",
     date: "2026-11-22",
     summary: "Cal entry rows: calorie total column is 25% wider and sits closer to the time column.",
@@ -643,6 +648,11 @@ async function handleClearAllHistoryClick() {
   const button = ui.clearAllHistoryBtn;
   const statusNode = ui.clearAllHistoryStatus;
 
+  if (!button.dataset.originalLabel) {
+    button.dataset.originalLabel = button.textContent;
+  }
+  const originalLabel = button.dataset.originalLabel;
+
   const pressCount = (Number(button.dataset.pressCount) || 0) + 1;
   button.dataset.pressCount = String(pressCount);
 
@@ -653,9 +663,7 @@ async function handleClearAllHistoryClick() {
   if (pressCount >= CLEAR_ALL_HISTORY_PRESSES_REQUIRED) {
     button.dataset.pressCount = "0";
     button.disabled = true;
-    if (statusNode) {
-      statusNode.textContent = "Clearing all history...";
-    }
+    button.textContent = "Clearing all history...";
 
     try {
       await clearAllHistory();
@@ -669,20 +677,17 @@ async function handleClearAllHistoryClick() {
       }
     } finally {
       button.disabled = false;
+      button.textContent = originalLabel;
     }
     return;
   }
 
   const remaining = CLEAR_ALL_HISTORY_PRESSES_REQUIRED - pressCount;
-  if (statusNode) {
-    statusNode.textContent = `Press ${remaining} more time${remaining === 1 ? "" : "s"} to confirm.`;
-  }
+  button.textContent = `Press ${remaining} more time${remaining === 1 ? "" : "s"} to confirm.`;
 
   button._clearHistoryResetTimer = setTimeout(() => {
     button.dataset.pressCount = "0";
-    if (statusNode) {
-      statusNode.textContent = "";
-    }
+    button.textContent = originalLabel;
   }, CLEAR_ALL_HISTORY_RESET_DELAY_MS);
 }
 
