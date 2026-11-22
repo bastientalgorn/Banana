@@ -4,16 +4,16 @@ window.FOOD_TYPE_SEED = [
     "calPerUnit": 85.792
   },
   {
-    "name": "1 applesauce",
-    "calPerUnit": 72.24
-  },
-  {
     "name": "1 avocado",
     "calPerUnit": 312.2
   },
   {
     "name": "1 banana",
     "calPerUnit": 127.4
+  },
+  {
+    "name": "1 beef sausage",
+    "calPerUnit": 61.01
   },
   {
     "name": "1 carrot",
@@ -25,19 +25,19 @@ window.FOOD_TYPE_SEED = [
   },
   {
     "name": "1 egg",
-    "calPerUnit": 49.67
+    "calPerUnit": 74.72
   },
   {
-    "name": "1 farro",
-    "calPerUnit": 165.15
+    "name": "1 egg white",
+    "calPerUnit": 18.7
+  },
+  {
+    "name": "1 egg yolk",
+    "calPerUnit": 56.78
   },
   {
     "name": "1 flour",
     "calPerUnit": 306.85
-  },
-  {
-    "name": "1 kiwifruit",
-    "calPerUnit": 81.2
   },
   {
     "name": "1 kiwifruit (kiwi)",
@@ -68,28 +68,16 @@ window.FOOD_TYPE_SEED = [
     "calPerUnit": 26.95
   },
   {
-    "name": "1 pineapple",
-    "calPerUnit": 84.14
-  },
-  {
     "name": "1 plum",
     "calPerUnit": 73.78
   },
   {
+    "name": "1 pork sausage",
+    "calPerUnit": 461.205
+  },
+  {
     "name": "1 potato",
     "calPerUnit": 85.25
-  },
-  {
-    "name": "1 sausage",
-    "calPerUnit": 257.642
-  },
-  {
-    "name": "1 sorghum flour",
-    "calPerUnit": 109.2
-  },
-  {
-    "name": "1 sorghum grain",
-    "calPerUnit": 166.5
   },
   {
     "name": "1 sweet potato",
@@ -97,306 +85,318 @@ window.FOOD_TYPE_SEED = [
   },
   {
     "name": "1 tomato",
-    "calPerUnit": 33.205
+    "calPerUnit": 23.575
   },
   {
-    "name": "1g Alaska Pollock",
+    "name": "1 turkey sausage",
+    "calPerUnit": 47.15
+  },
+  {
+    "name": "1g Alaska Pollock, raw",
     "calPerUnit": 0.785
   },
   {
-    "name": "1g Almond butter",
+    "name": "1g Almond butter, creamy",
     "calPerUnit": 6.45
   },
   {
-    "name": "1g Almond milk",
-    "calPerUnit": 0.169
+    "name": "1g Almond milk, unsweetened, plain, refrigerated",
+    "calPerUnit": 0.193
   },
   {
-    "name": "1g Amaranth",
-    "calPerUnit": 3.815
+    "name": "1g Almond milk, unsweetened, plain, shelf stable",
+    "calPerUnit": 0.146
   },
   {
-    "name": "1g Anchovies",
+    "name": "1g Amaranth, flour, pre-gelatinized, organic",
+    "calPerUnit": 3.78
+  },
+  {
+    "name": "1g Amaranth, puffed, organic",
+    "calPerUnit": 3.85
+  },
+  {
+    "name": "1g Anchovies, canned in olive oil, with salt, drained",
     "calPerUnit": 2.06
   },
   {
-    "name": "1g Apple juice",
+    "name": "1g Apple juice, with added vitamin C, from concentrate, shelf stable",
     "calPerUnit": 0.484
   },
   {
-    "name": "1g Apricot",
+    "name": "1g Applesauce, unsweetened, with added vitamin C",
+    "calPerUnit": 0.516
+  },
+  {
+    "name": "1g Apricot, with skin, raw",
     "calPerUnit": 0.484
   },
   {
-    "name": "1g Arugula",
+    "name": "1g Arugula, baby, raw",
     "calPerUnit": 0.31
   },
   {
-    "name": "1g Asparagus",
+    "name": "1g Asparagus, green, raw",
     "calPerUnit": 0.281
   },
   {
-    "name": "1g Baked beans",
+    "name": "1g Baked beans, Original, canned, with pork",
     "calPerUnit": 1.22
   },
   {
-    "name": "1g Beans",
-    "calPerUnit": 1.238
+    "name": "1g Beans, baked, canned, vegetarian",
+    "calPerUnit": 1.19
   },
   {
-    "name": "1g Beef",
-    "calPerUnit": 1.755
+    "name": "1g Beans, black, canned, sodium added",
+    "calPerUnit": 1.15
   },
   {
-    "name": "1g Beet greens",
-    "calPerUnit": 0.264
+    "name": "1g Beans, cannellini, canned, sodium added",
+    "calPerUnit": 1.15
   },
   {
-    "name": "1g Beets",
-    "calPerUnit": 0.446
+    "name": "1g Beans, cannellini, dry",
+    "calPerUnit": 3.45
   },
   {
-    "name": "1g Bison",
-    "calPerUnit": 1.59
-  },
-  {
-    "name": "1g Blackeye pea",
-    "calPerUnit": 2.35
-  },
-  {
-    "name": "1g Blueberries",
-    "calPerUnit": 0.639
-  },
-  {
-    "name": "1g Bologna",
-    "calPerUnit": 2.625
-  },
-  {
-    "name": "1g Bread",
-    "calPerUnit": 2.65
-  },
-  {
-    "name": "1g Broccoli",
-    "calPerUnit": 0.31
-  },
-  {
-    "name": "1g Brown rice",
-    "calPerUnit": 3.817
-  },
-  {
-    "name": "1g Brussels sprouts",
-    "calPerUnit": 0.595
-  },
-  {
-    "name": "1g Buckwheat",
-    "calPerUnit": 3.64
-  },
-  {
-    "name": "1g Bulgur",
-    "calPerUnit": 3.72
-  },
-  {
-    "name": "1g Buttermilk",
-    "calPerUnit": 0.428
-  },
-  {
-    "name": "1g Cabbage",
-    "calPerUnit": 0.286
-  },
-  {
-    "name": "1g Cauliflower",
-    "calPerUnit": 0.276
-  },
-  {
-    "name": "1g Celery",
-    "calPerUnit": 0.167
-  },
-  {
-    "name": "1g Cheese",
-    "calPerUnit": 3.241
-  },
-  {
-    "name": "1g Cherries",
-    "calPerUnit": 0.705
-  },
-  {
-    "name": "1g Chia seeds",
-    "calPerUnit": 5.17
-  },
-  {
-    "name": "1g Chicken",
-    "calPerUnit": 1.459
-  },
-  {
-    "name": "1g Chickpea flour",
-    "calPerUnit": 3.91
-  },
-  {
-    "name": "1g Chickpeas",
-    "calPerUnit": 3.925
-  },
-  {
-    "name": "1g Chickpeas (garbanzo beans",
-    "calPerUnit": 1.37
-  },
-  {
-    "name": "1g Cod",
-    "calPerUnit": 0.608
-  },
-  {
-    "name": "1g Collards",
-    "calPerUnit": 0.469
-  },
-  {
-    "name": "1g Corn",
-    "calPerUnit": 2.283
-  },
-  {
-    "name": "1g Corn flour",
-    "calPerUnit": 3.76
-  },
-  {
-    "name": "1g Cottage cheese",
-    "calPerUnit": 1.03
-  },
-  {
-    "name": "1g Cranberry juice",
-    "calPerUnit": 0.321
-  },
-  {
-    "name": "1g Cream",
-    "calPerUnit": 2.695
-  },
-  {
-    "name": "1g Cream cheese",
-    "calPerUnit": 3.43
-  },
-  {
-    "name": "1g Crustaceans",
-    "calPerUnit": 0.762
-  },
-  {
-    "name": "1g Cucumber",
-    "calPerUnit": 0.159
-  },
-  {
-    "name": "1g Dressing",
-    "calPerUnit": 4.38
-  },
-  {
-    "name": "1g Egg",
-    "calPerUnit": 3.898
-  },
-  {
-    "name": "1g Eggs",
-    "calPerUnit": 3.34
-  },
-  {
-    "name": "1g Einkorn",
-    "calPerUnit": 3.69
-  },
-  {
-    "name": "1g Fennel",
-    "calPerUnit": 0.269
-  },
-  {
-    "name": "1g Figs",
-    "calPerUnit": 2.49
-  },
-  {
-    "name": "1g Fish",
-    "calPerUnit": 1.046
-  },
-  {
-    "name": "1g Flaxseed",
-    "calPerUnit": 5.45
-  },
-  {
-    "name": "1g Flour",
-    "calPerUnit": 3.813
-  },
-  {
-    "name": "1g Fonio",
-    "calPerUnit": 3.69
-  },
-  {
-    "name": "1g Frankfurter",
-    "calPerUnit": 3.14
-  },
-  {
-    "name": "1g Garlic",
-    "calPerUnit": 1.43
-  },
-  {
-    "name": "1g Grape juice",
-    "calPerUnit": 0.661
-  },
-  {
-    "name": "1g Grapefruit juice",
-    "calPerUnit": 0.39
-  },
-  {
-    "name": "1g Grapes",
-    "calPerUnit": 0.83
-  },
-  {
-    "name": "1g Halibut",
-    "calPerUnit": 0.813
-  },
-  {
-    "name": "1g Ham",
-    "calPerUnit": 1.135
-  },
-  {
-    "name": "1g Hummus",
-    "calPerUnit": 2.29
-  },
-  {
-    "name": "1g Kale",
-    "calPerUnit": 0.355
-  },
-  {
-    "name": "1g Kamut",
-    "calPerUnit": 3.72
-  },
-  {
-    "name": "1g Kernza flour",
-    "calPerUnit": 3.87
-  },
-  {
-    "name": "1g Ketchup",
+    "name": "1g Beans, great northern, canned, sodium added",
     "calPerUnit": 1.17
   },
   {
-    "name": "1g Khorasan",
-    "calPerUnit": 3.745
+    "name": "1g Beans, kidney, dark red, canned",
+    "calPerUnit": 1.27
   },
   {
-    "name": "1g Lamb",
-    "calPerUnit": 2.37
+    "name": "1g Beans, kidney, light red, canned",
+    "calPerUnit": 1.27
   },
   {
-    "name": "1g Lentils",
-    "calPerUnit": 3.6
+    "name": "1g Beans, navy, canned, sodium added",
+    "calPerUnit": 1.19
   },
   {
-    "name": "1g Lettuce",
-    "calPerUnit": 0.189
+    "name": "1g Beans, pinto, canned, sodium added",
+    "calPerUnit": 1.17
   },
   {
-    "name": "1g Lobster",
-    "calPerUnit": 0.588
+    "name": "1g Beans, snap, green, canned",
+    "calPerUnit": 0.21
   },
   {
-    "name": "1g Lunchmeat",
-    "calPerUnit": 1.1
+    "name": "1g Beans, snap, green, raw",
+    "calPerUnit": 0.4
   },
   {
-    "name": "1g Mahi mahi",
-    "calPerUnit": 0.837
+    "name": "1g Beef, chuck, roast, boneless",
+    "calPerUnit": 2.32
   },
   {
-    "name": "1g Mandarin",
-    "calPerUnit": 0.62
+    "name": "1g Beef, flank, steak, boneless",
+    "calPerUnit": 1.64
+  },
+  {
+    "name": "1g Beef, ground, 80% lean meat / 20% fat, raw",
+    "calPerUnit": 2.43
+  },
+  {
+    "name": "1g Beef, ground, 90% lean meat / 10% fat, raw",
+    "calPerUnit": 1.85
+  },
+  {
+    "name": "1g Beef, loin, tenderloin roast, separable lean only",
+    "calPerUnit": 1.76
+  },
+  {
+    "name": "1g Beef, loin, top loin steak, boneless",
+    "calPerUnit": 1.55
+  },
+  {
+    "name": "1g Beef, ribeye, steak, boneless",
+    "calPerUnit": 2.54
+  },
+  {
+    "name": "1g Beef, round, eye of round roast, boneless",
+    "calPerUnit": 1.22
+  },
+  {
+    "name": "1g Beef, round, top round roast, boneless",
+    "calPerUnit": 1.23
+  },
+  {
+    "name": "1g Beef, round, top round, boneless",
+    "calPerUnit": 1.41
+  },
+  {
+    "name": "1g Beef, short loin (NY strip steak), raw",
+    "calPerUnit": 1.9
+  },
+  {
+    "name": "1g Beef, short loin, porterhouse steak, separable lean only",
+    "calPerUnit": 1.45
+  },
+  {
+    "name": "1g Beef, short loin, t-bone steak, bone-in",
+    "calPerUnit": 2.19
+  },
+  {
+    "name": "1g Beef, tenderloin steak, raw",
+    "calPerUnit": 1.43
+  },
+  {
+    "name": "1g Beef, top sirloin steak, raw",
+    "calPerUnit": 1.4
+  },
+  {
+    "name": "1g Beet greens, raw",
+    "calPerUnit": 0.264
+  },
+  {
+    "name": "1g Beets, raw",
+    "calPerUnit": 0.446
+  },
+  {
+    "name": "1g Bison, ground, raw",
+    "calPerUnit": 1.59
+  },
+  {
+    "name": "1g Blackeye pea, canned, sodium added, drained and rinsed",
+    "calPerUnit": 1.16
+  },
+  {
+    "name": "1g Blackeye pea, dry",
+    "calPerUnit": 3.54
+  },
+  {
+    "name": "1g Blueberries, raw",
+    "calPerUnit": 0.639
+  },
+  {
+    "name": "1g Bologna, beef",
+    "calPerUnit": 2.67
+  },
+  {
+    "name": "1g Bologna, classic",
+    "calPerUnit": 2.58
+  },
+  {
+    "name": "1g Bread, 100% whole wheat, commercial",
+    "calPerUnit": 2.61
+  },
+  {
+    "name": "1g Bread, mulitgrain, commercial",
+    "calPerUnit": 2.71
+  },
+  {
+    "name": "1g Bread, white, commercial",
+    "calPerUnit": 2.63
+  },
+  {
+    "name": "1g Broccoli, raw",
+    "calPerUnit": 0.31
+  },
+  {
+    "name": "1g Brown rice, flour, coarse ground, pre-gelatinized",
+    "calPerUnit": 3.83
+  },
+  {
+    "name": "1g Brown rice, puffed",
+    "calPerUnit": 3.77
+  },
+  {
+    "name": "1g Brown rice, puffed, organic",
+    "calPerUnit": 3.85
+  },
+  {
+    "name": "1g Brussels sprouts, raw",
+    "calPerUnit": 0.595
+  },
+  {
+    "name": "1g Buckwheat, puffed, organic",
+    "calPerUnit": 3.72
+  },
+  {
+    "name": "1g Buckwheat, whole grain",
+    "calPerUnit": 3.56
+  },
+  {
+    "name": "1g Bulgur, dry, raw",
+    "calPerUnit": 3.72
+  },
+  {
+    "name": "1g Buttermilk, low fat",
+    "calPerUnit": 0.428
+  },
+  {
+    "name": "1g Cabbage, bok choy, raw",
+    "calPerUnit": 0.203
+  },
+  {
+    "name": "1g Cabbage, green, raw",
+    "calPerUnit": 0.314
+  },
+  {
+    "name": "1g Cabbage, red, raw",
+    "calPerUnit": 0.341
+  },
+  {
+    "name": "1g Cauliflower, raw",
+    "calPerUnit": 0.276
+  },
+  {
+    "name": "1g Celery, raw",
+    "calPerUnit": 0.167
+  },
+  {
+    "name": "1g Cheese, American, restaurant",
+    "calPerUnit": 3.75
+  },
+  {
+    "name": "1g Cheese, cheddar",
+    "calPerUnit": 4.08
+  },
+  {
+    "name": "1g Cheese, cotija, solid",
+    "calPerUnit": 3.51
+  },
+  {
+    "name": "1g Cheese, cottage, lowfat, 2% milkfat",
+    "calPerUnit": 0.84
+  },
+  {
+    "name": "1g Cheese, dry white, queso seco",
+    "calPerUnit": 3.26
+  },
+  {
+    "name": "1g Cheese, feta, whole milk, crumbled",
+    "calPerUnit": 2.73
+  },
+  {
+    "name": "1g Cheese, monterey jack, solid",
+    "calPerUnit": 3.92
+  },
+  {
+    "name": "1g Cheese, mozzarella, low moisture, part-skim",
+    "calPerUnit": 2.98
+  },
+  {
+    "name": "1g Cheese, oaxaca, solid",
+    "calPerUnit": 2.97
+  },
+  {
+    "name": "1g Cheese, parmesan, grated",
+    "calPerUnit": 4.21
+  },
+  {
+    "name": "1g Cheese, parmesan, grated, refrigerated",
+    "calPerUnit": 4.03
+  },
+  {
+    "name": "1g Cheese, pasteurized process cheese food or product, American, singles",
+    "calPerUnit": 3.1
+  },
+  {
+    "name": "1g Cheese, pasteurized process, American, vitamin D fortified",
+    "calPerUnit": 3.66
   }
 ];

@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.16.0",
+    date: "2026-11-22",
+    summary: "Fixed inconsistent/incorrect predefined food templates: different foods (e.g. egg white/yolk/whole, distinct beef cuts, cheeses) were being averaged together into one entry; each is now kept distinct with accurate calories.",
+  },
+  {
     version: "1.15.2",
     date: "2026-11-22",
     summary: "Clear all history: the \"press N more times\" countdown now shows directly on the button itself.",
@@ -1845,8 +1850,7 @@ function simplifyTemplateName(rawName) {
 }
 
 function simplifyFoodLabel(label) {
-  const firstChunk = String(label || "").split(",", 1)[0];
-  return firstChunk.replace(/\s+/g, " ").trim();
+  return String(label || "").replace(/\s+/g, " ").trim();
 }
 
 function normalizeNameKey(value) {

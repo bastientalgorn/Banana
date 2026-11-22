@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -8,6 +9,12 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE_JSON = ROOT / "FoodData_Central_foundation_food_json_2026-10-29.json"
 TARGET_JS = ROOT / "food_seed_data.js"
 MAX_ITEMS = 100
+# How many leading comma-separated segments of the USDA description to use
+# when building the name for gram-based (non-countable) entries. Using only
+# the first segment caused very different foods (e.g. many distinct cuts of
+# beef, or egg white vs. egg yolk vs. whole egg) to collapse onto the same
+# generated name and have their calorie values silently averaged together.
+MAX_BASE_NAME_SEGMENTS = 4
 
 IRREGULAR_SINGULAR = {
     "cookies": "cookie",
@@ -51,12 +58,32 @@ DISCRETE_UNIT_ALIASES = {
     "wedge",
     "ear",
     "spear",
+    "egg",
 }
 
 
 def normalize_name(raw: str) -> str:
     normalized = " ".join(raw.replace("\n", " ").split())
     return normalized.strip(" ,;")
+
+
+_COUNTABLE_KEYWORD_PATTERN = re.compile(
+    r"\b(" + "|".join(re.escape(keyword) for keyword in COUNTABLE_KEYWORDS) + r")(e?s)?\b"
+)
+
+_EGG_WHITE_PATTERN = re.compile(r"\bwhite\b")
+_EGG_YOLK_PATTERN = re.compile(r"\byolk\b")
+
+# Processed/concentrated forms (e.g. "Tomato, paste, canned") are nutritionally
+# very different from the whole/fresh form of the same keyword (e.g. a fresh
+# tomato), so they should not be averaged into the generic "1 tomato"-style
+# countable entry; they fall back to a distinct gram-based entry instead.
+_PROCESSED_FORM_PATTERN = re.compile(r"\b(paste|sauce|puree|juice|powder|extract|crushed)\b")
+
+# Sausage covers very different proteins/styles (turkey breakfast link vs. pork
+# chorizo) with wildly different calorie density, so it is disambiguated by
+# protein type rather than collapsed into one generic "1 sausage" value.
+_SAUSAGE_PROTEIN_PATTERN = re.compile(r"\b(beef|pork|turkey|chicken)\b")
 
 
 def extract_kcal(food: dict[str, Any]) -> float | None:
@@ -86,7 +113,9 @@ def extract_kcal(food: dict[str, Any]) -> float | None:
 
 def should_use_unit_label(description: str) -> bool:
     lowered = description.lower()
-    return any(keyword in lowered for keyword in COUNTABLE_KEYWORDS)
+    if _PROCESSED_FORM_PATTERN.search(lowered):
+        return False
+    return bool(_COUNTABLE_KEYWORD_PATTERN.search(lowered))
 
 
 def pick_portion_grams(food: dict[str, Any]) -> float | None:
@@ -119,6 +148,20 @@ def pick_portion_grams(food: dict[str, Any]) -> float | None:
     return discrete_candidate or racc_candidate
 
 
+def egg_component_qualifier(description: str) -> str | None:
+    lowered = description.lower()
+    if _EGG_WHITE_PATTERN.search(lowered):
+        return "white"
+    if _EGG_YOLK_PATTERN.search(lowered):
+        return "yolk"
+    return None
+
+
+def sausage_protein_qualifier(description: str) -> str | None:
+    match = _SAUSAGE_PROTEIN_PATTERN.search(description.lower())
+    return match.group(1) if match else None
+
+
 def singularize(base_name: str) -> str:
     lowered = base_name.lower().strip()
     if lowered in IRREGULAR_SINGULAR:
@@ -137,20 +180,36 @@ def format_entry(food: dict[str, Any], kcal_per_100g: float) -> dict[str, int | 
     if not description:
         return None
 
-    base_name = normalize_name(description.split(",", 1)[0])
-    if not base_name:
+    segments = [normalize_name(segment) for segment in description.split(",")]
+    segments = [segment for segment in segments if segment]
+    if not segments:
         return None
+
+    first_segment = segments[0]
 
     if should_use_unit_label(description):
         portion_grams = pick_portion_grams(food)
         if portion_grams and portion_grams > 0:
-            singular = singularize(base_name)
-            unit_label = "1 egg" if "egg" in singular else f"1 {singular}"
+            singular = singularize(first_segment)
+            unit_label = f"1 {singular}"
+            if singular.lower() == "egg":
+                qualifier = egg_component_qualifier(description)
+                if qualifier:
+                    unit_label = f"1 egg {qualifier}"
+            elif singular.lower() == "sausage":
+                qualifier = sausage_protein_qualifier(description)
+                if qualifier:
+                    unit_label = f"1 {qualifier} sausage"
             return {
                 "name": unit_label,
                 "calPerUnit": round(kcal_per_100g * portion_grams / 100.0, 2),
             }
 
+    # Gram-based fallback: use several leading description segments (not just
+    # the first) so genuinely different foods (different cuts/preparations,
+    # e.g. "Beef, loin, tenderloin roast" vs. "Beef, round, eye of round
+    # roast") get distinct names instead of being merged and averaged.
+    base_name = ", ".join(segments[:MAX_BASE_NAME_SEGMENTS])
     return {
         "name": f"1g {base_name}",
         "calPerUnit": round(kcal_per_100g / 100.0, 3),
