@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Banana Tracker</title>
+  <link rel="icon" type="image/png" sizes="16x16" href="banana_icon_16.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-nav" aria-label="Main navigation">
+      <button class="tab-button active" data-tab="cal" type="button">Cal</button>
+      <button class="tab-button" data-tab="weight" type="button">Progress</button>
+      <button class="tab-button" data-tab="data" type="button">Data</button>
+    </header>
+
+    <main>
+      <section id="tab-cal" class="tab-section active">
+        <div class="card">
+          <p class="summary">Daily total: <strong id="daily-total">0</strong> kcal. Remaining for today: <strong id="calories-left">0</strong> kcal.</p>
+        </div>
+
+        <div class="card">
+          <button id="show-cal-add-btn" type="button" class="new-entry-button">New entry</button>
+        </div>
+
+        <div class="card">
+          <ul id="cal-entry-list" class="list"></ul>
+        </div>
+      </section>
+
+      <section id="tab-weight" class="tab-section">
+        <div class="card">
+          <form id="weight-today-form" class="progress-entry-row">
+            <span id="weight-date-display" class="progress-date-display">2026-11-21</span>
+            <input id="weight-today-date" type="date" class="hidden-date-input" />
+            <button id="weight-date-picker-btn" type="button" class="icon-edit-button date-picker-button" aria-label="Select date">📅</button>
+            <input id="weight-today-input" type="text" inputmode="decimal" required="required" placeholder="weight" />
+            <button type="submit" class="inline-save-button">Save</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Trend</h2>
+          <canvas id="weight-chart" width="900" height="360" aria-label="Weight chart"></canvas>
+        </div>
+
+        <div class="card">
+          <h2>History</h2>
+          <ul id="weight-history-list" class="list"></ul>
+        </div>
+      </section>
+
+      <section id="tab-data" class="tab-section">
+        <div class="card">
+          <h2>Targets</h2>
+          <form id="targets-form">
+            <label for="daily-calorie-target">Daily calory target</label>
+            <input id="daily-calorie-target" type="number" step="1" inputmode="numeric" required="required" />
+
+            <label for="weight-target">Weight target</label>
+            <input id="weight-target" type="number" step="1" inputmode="numeric" required="required" />
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Create Item Type</h2>
+          <form id="item-type-form">
+            <label for="item-type-name">Name</label>
+            <input id="item-type-name" type="text" maxlength="80" autocomplete="off" required="required" />
+
+            <label for="item-type-cal">Calories per unit</label>
+            <input id="item-type-cal" type="number" inputmode="numeric" step="1" required="required" />
+
+            <button type="submit">Create item type</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Item Types</h2>
+          <input id="item-type-search" type="text" placeholder="Search item types" autocomplete="off" />
+          <ul id="item-type-list" class="list"></ul>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <template id="simple-list-item-template">
+    <li class="list-item">
+      <div class="item-main"></div>
+      <div class="item-meta"></div>
+      <div class="item-actions"></div>
+    </li>
+  </template>
+
+  <div id="cal-entry-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Calorie entry form">
+    <div class="modal-backdrop" id="cal-entry-modal-backdrop"></div>
+    <div class="modal-panel">
+      <form id="cal-entry-form">
+        <input id="cal-entry-id" type="hidden" />
+
+        <div class="type-row one-column">
+          <input id="cal-item-type-text" type="text" maxlength="80" autocomplete="off" list="cal-item-type-list" required="required" placeholder="Type" />
+          <datalist id="cal-item-type-list"></datalist>
+        </div>
+
+        <div class="type-row one-column">
+          <input id="cal-item-cal" type="number" step="0.001" inputmode="decimal" placeholder="Calory per item" />
+        </div>
+
+        <div class="quantity-row quantity-total-row">
+          <span class="quantity-label">Quantity</span>
+          <input id="cal-quantity" type="number" min="1" step="1" inputmode="numeric" required="required" />
+          <button id="qty-plus-btn" type="button" class="qty-adjust-button" aria-label="Increase quantity">+</button>
+          <button id="qty-minus-btn" type="button" class="qty-adjust-button" aria-label="Decrease quantity">-</button>
+          <span class="quantity-label total-label">Total calories</span>
+          <span id="cal-total-calories" class="total-value">--</span>
+        </div>
+
+        <div class="quantity-row">
+          <span class="quantity-label">Date</span>
+          <input id="cal-entry-date" type="date" required="required" />
+          <span class="quantity-label">Time</span>
+          <input id="cal-entry-time" type="time" step="60" required="required" />
+        </div>
+
+        <div class="row-actions three-columns" id="cal-entry-primary-actions">
+          <button id="cal-entry-submit-btn" type="submit">Add</button>
+          <button id="cal-entry-cancel-btn" type="button">Cancel</button>
+          <button id="cal-entry-delete-btn" type="button" class="icon-delete-button" aria-label="Delete entry" title="Delete entry">🗑</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="item-type-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Item type edit form">
+    <div class="modal-backdrop" id="item-type-modal-backdrop"></div>
+    <div class="modal-panel">
+      <form id="item-type-edit-form">
+        <input id="item-type-edit-id" type="hidden" />
+
+        <div class="type-row one-column">
+          <input id="item-type-edit-name" type="text" maxlength="80" autocomplete="off" required="required" placeholder="Name" />
+        </div>
+
+        <div class="quantity-row">
+          <span class="quantity-label">Quantity</span>
+          <input id="item-type-edit-cal" type="number" step="0.001" inputmode="decimal" required="required" />
+          <button id="item-type-cal-plus-btn" type="button" class="qty-adjust-button" aria-label="Increase quantity">+</button>
+          <button id="item-type-cal-minus-btn" type="button" class="qty-adjust-button" aria-label="Decrease quantity">-</button>
+        </div>
+
+        <div class="row-actions three-columns">
+          <button id="item-type-edit-save-btn" type="submit">Save</button>
+          <button id="item-type-edit-cancel-btn" type="button">Cancel</button>
+          <button id="item-type-edit-delete-btn" type="button" class="icon-delete-button" aria-label="Delete item type" title="Delete item type">🗑</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="progress-edit-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Progress data point form">
+    <div class="modal-backdrop" id="progress-edit-modal-backdrop"></div>
+    <div class="modal-panel">
+      <form id="progress-edit-form">
+        <input id="progress-edit-original-date" type="hidden" />
+
+        <div class="progress-entry-row">
+          <span id="progress-edit-date-display" class="progress-date-display">2026-11-21</span>
+          <input id="progress-edit-date" type="date" class="hidden-date-input" />
+          <button id="progress-edit-date-picker-btn" type="button" class="icon-edit-button date-picker-button" aria-label="Select date">📅</button>
+          <span></span>
+          <span></span>
+        </div>
+
+        <div class="quantity-row">
+          <span class="quantity-label">Weight</span>
+          <input id="progress-edit-weight" type="number" step="0.1" inputmode="decimal" required="required" placeholder="weight" />
+          <button id="progress-edit-plus-btn" type="button" class="qty-adjust-button" aria-label="Increase weight">+</button>
+          <button id="progress-edit-minus-btn" type="button" class="qty-adjust-button" aria-label="Decrease weight">-</button>
+        </div>
+
+        <div class="row-actions three-columns">
+          <button id="progress-edit-save-btn" type="submit">Save</button>
+          <button id="progress-edit-cancel-btn" type="button">Cancel</button>
+          <button id="progress-edit-delete-btn" type="button" class="icon-delete-button" aria-label="Delete progress entry" title="Delete progress entry">🗑</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="food_seed_data.js" type="application/javascript"></script>
+  <script src="app.js" type="application/javascript"></script>
+</body>
+</html>
