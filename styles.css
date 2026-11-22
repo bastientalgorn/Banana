@@ -483,15 +483,8 @@ body.modal-open {
 }
 
 .icon-delete-button {
-  width: 100%;
-  min-width: 0;
-  height: auto;
-  margin-top: 0.35rem;
-  padding: 0.29rem;
-  border-radius: 9px;
   background: var(--accent-2);
   color: #081018;
-  font-size: 0.96rem;
   font-weight: 700;
 }
 
