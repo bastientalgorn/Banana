@@ -320,6 +320,32 @@ button.danger {
   text-overflow: ellipsis;
 }
 
+#item-type-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+#item-type-list .list-item {
+  width: auto;
+  max-width: 190px;
+  padding: 0.45rem 0.55rem;
+}
+
+#item-type-list .cal-entry-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  word-break: break-word;
+  line-height: 1.2;
+}
+
+#item-type-list .icon-edit-button {
+  flex-shrink: 0;
+}
+
 .progress-history-label {
   display: flex;
   justify-content: space-between;
@@ -377,6 +403,10 @@ button.danger {
 .cal-col-total,
 .cal-col-time {
   text-align: right;
+}
+
+.cal-col-total {
+  margin-left: 40px;
 }
 
 .cal-col-time {
