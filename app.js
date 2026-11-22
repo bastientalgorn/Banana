@@ -110,6 +110,8 @@ const ui = {
   itemTypeCalMinusBtn: document.getElementById("item-type-cal-minus-btn"),
   itemTypeEditCancelBtn: document.getElementById("item-type-edit-cancel-btn"),
   itemTypeEditDeleteBtn: document.getElementById("item-type-edit-delete-btn"),
+  deepRefreshBtn: document.getElementById("deep-refresh-btn"),
+  deepRefreshStatus: document.getElementById("deep-refresh-status"),
   listTemplate: document.getElementById("simple-list-item-template"),
 };
 
@@ -401,6 +403,10 @@ function bindUiEvents() {
     await refreshDataView();
   });
 
+  ui.deepRefreshBtn.addEventListener("click", () => {
+    void performDeepRefresh();
+  });
+
   ui.itemTypeModalBackdrop.addEventListener("click", () => {
     closeItemTypeModal();
   });
@@ -486,6 +492,37 @@ async function reloadItemTypesAndRefresh() {
   await refreshCalView();
   await refreshWeightView();
   await refreshDataView();
+}
+
+async function performDeepRefresh() {
+  const statusNode = ui.deepRefreshStatus;
+  const button = ui.deepRefreshBtn;
+  button.disabled = true;
+  if (statusNode) {
+    statusNode.textContent = "Clearing caches...";
+  }
+
+  try {
+    if (window.caches && typeof caches.keys === "function") {
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+    }
+
+    if (navigator.serviceWorker && typeof navigator.serviceWorker.getRegistrations === "function") {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+    }
+  } catch (error) {
+    console.error("Deep refresh cleanup failed", error);
+  }
+
+  if (statusNode) {
+    statusNode.textContent = "Reloading...";
+  }
+
+  const bustedUrl = new URL(window.location.href);
+  bustedUrl.searchParams.set("_deepRefresh", String(Date.now()));
+  window.location.replace(bustedUrl.toString());
 }
 
 function syncItemTypeSelects() {
