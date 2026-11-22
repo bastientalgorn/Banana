@@ -8,13 +8,9 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_JSON = ROOT / "FoodData_Central_foundation_food_json_2026-10-29.json"
 TARGET_JS = ROOT / "food_seed_data.js"
-MAX_ITEMS = 100
-# How many leading comma-separated segments of the USDA description to use
-# when building the name for gram-based (non-countable) entries. Using only
-# the first segment caused very different foods (e.g. many distinct cuts of
-# beef, or egg white vs. egg yolk vs. whole egg) to collapse onto the same
-# generated name and have their calorie values silently averaged together.
-MAX_BASE_NAME_SEGMENTS = 4
+# No cap on item count or name length: accuracy matters more than trimming,
+# so every distinguishable USDA food gets its own entry with its full
+# description rather than being shortened/merged with unrelated foods.
 
 IRREGULAR_SINGULAR = {
     "cookies": "cookie",
@@ -205,11 +201,12 @@ def format_entry(food: dict[str, Any], kcal_per_100g: float) -> dict[str, int | 
                 "calPerUnit": round(kcal_per_100g * portion_grams / 100.0, 2),
             }
 
-    # Gram-based fallback: use several leading description segments (not just
-    # the first) so genuinely different foods (different cuts/preparations,
+    # Gram-based fallback: use the full description (not just the first
+    # segment) so genuinely different foods (different cuts/preparations,
     # e.g. "Beef, loin, tenderloin roast" vs. "Beef, round, eye of round
     # roast") get distinct names instead of being merged and averaged.
-    base_name = ", ".join(segments[:MAX_BASE_NAME_SEGMENTS])
+    # Long names are fine: accuracy matters more than trimming.
+    base_name = ", ".join(segments)
     return {
         "name": f"1g {base_name}",
         "calPerUnit": round(kcal_per_100g / 100.0, 3),
@@ -259,7 +256,7 @@ def build_seed_data() -> list[dict[str, float | str]]:
         )
 
     selected.sort(key=lambda item: str(item["name"]).lower())
-    return selected[:MAX_ITEMS]
+    return selected
 
 
 def write_seed_file(items: list[dict[str, float | str]]) -> None:

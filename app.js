@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.17.0",
+    date: "2026-11-22",
+    summary: "Seed data is no longer capped/trimmed (accuracy over brevity); stale incorrectly-named seed templates from older versions (e.g. \"1g Egg\"/\"1g Eggs\") are now cleaned up automatically; fixed extra empty space below the Maintenance card when collapsed.",
+  },
+  {
     version: "1.16.0",
     date: "2026-11-22",
     summary: "Fixed inconsistent/incorrect predefined food templates: different foods (e.g. egg white/yolk/whole, distinct beef cuts, cheeses) were being averaged together into one entry; each is now kept distinct with accurate calories.",
@@ -197,6 +202,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await migrateLegacy100gTemplates();
   await ensureSeedData();
   await migrateFlagExistingSeedTemplates();
+  await pruneStaleSeedTemplates();
   await simplifyAndPruneTemplates();
   state.templates = await listTemplates();
   ui.weightTodayDate.value = state.selectedDate;
@@ -490,6 +496,7 @@ function bindUiEvents() {
     const isHidden = ui.maintenanceBody.classList.toggle("hidden");
     ui.maintenanceToggleBtn.textContent = isHidden ? "Show" : "Hide";
     ui.maintenanceToggleBtn.setAttribute("aria-expanded", String(!isHidden));
+    ui.maintenanceToggleBtn.closest(".card-header-row")?.classList.toggle("header-row-collapsed", isHidden);
   });
 
   ui.templateModalBackdrop.addEventListener("click", () => {
@@ -1692,6 +1699,45 @@ async function migrateFlagExistingSeedTemplates() {
       ...item,
       isSeed: true,
     });
+  }
+}
+
+async function pruneStaleSeedTemplates() {
+  // Older versions of the seed generator produced truncated/incorrect names
+  // (e.g. "1g Egg", "1g Eggs" from a buggy first-comma-segment cut). Those
+  // names no longer exist in the current seed data but were already written
+  // to IndexedDB by ensureSeedData on a prior load, and ensureSeedData only
+  // adds missing names — it never removes stale ones. Clean those up here:
+  // delete unused stale seed templates outright, or demote in-use ones to
+  // custom (isSeed: false) so the user's existing calorie entries keep working.
+  const fallbackSeeds = [
+    { name: "1g Banana", calPerUnit: 0.89 },
+    { name: "1g Yogurt, plain", calPerUnit: 0.61 },
+    { name: "1 egg", calPerUnit: 75 },
+  ];
+  const jsonSeed = Array.isArray(window.FOOD_TYPE_SEED) ? window.FOOD_TYPE_SEED : [];
+  const seeds = jsonSeed.length > 0 ? jsonSeed : fallbackSeeds;
+  const currentSeedNames = new Set(seeds.map((seed) => String(seed?.name || "").trim().toLowerCase()));
+
+  const existingItems = await listAll(STORE_TEMPLATES);
+  for (const item of existingItems) {
+    if (!item.isSeed) {
+      continue;
+    }
+    const normalized = String(item.name || "").trim().toLowerCase();
+    if (currentSeedNames.has(normalized)) {
+      continue;
+    }
+
+    const usages = await countCalEntriesForTemplate(item.id);
+    if (usages > 0) {
+      await updateRecord(STORE_TEMPLATES, {
+        ...item,
+        isSeed: false,
+      });
+    } else {
+      await deleteRecord(STORE_TEMPLATES, item.id);
+    }
   }
 }
 
