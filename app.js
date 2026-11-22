@@ -132,10 +132,6 @@ function bindUiEvents() {
     await syncCalModalTypeFields({ autoSuggestQuantity: true });
   });
 
-  ui.calItemTypeText.addEventListener("focus", () => {
-    renderItemTypeSuggestions();
-  });
-
   ui.calItemTypeText.addEventListener("blur", () => {
     hideItemTypeSuggestions();
   });
@@ -488,9 +484,14 @@ function syncItemTypeSelects() {
 
 function renderItemTypeSuggestions() {
   const query = String(ui.calItemTypeText.value || "").trim().toLowerCase();
-  const matches = query
-    ? state.itemTypes.filter((itemType) => itemType.name.toLowerCase().includes(query))
-    : state.itemTypes;
+
+  if (!query) {
+    ui.calItemTypeSuggestions.innerHTML = "";
+    ui.calItemTypeSuggestions.classList.add("hidden");
+    return;
+  }
+
+  const matches = state.itemTypes.filter((itemType) => itemType.name.toLowerCase().includes(query));
 
   ui.calItemTypeSuggestions.innerHTML = "";
 
