@@ -1,2 +1,8 @@
 __pycache__/
 *.pyc
+
+# Raw USDA source datasets used to generate food_seed_data.js. These are
+# large (tens to hundreds of MB) and not needed at runtime -- only the
+# generated food_seed_data.js is committed/shipped.
+FoodData_Central_sr_legacy_food_json_*.json
+FoodData_surveyDownload.json

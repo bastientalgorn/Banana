@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.18.0",
+    date: "2026-11-22",
+    summary: "Predefined templates now generated from USDA SR Legacy (7,800+ foods, incl. butter/oils previously missing), each tagged with a simple category (Meat, Dairy, Fish, etc.); common whole-unit foods like \"1 egg\"/\"1 apple\" are kept alongside gram-based entries; Data tab now requires a search once the template list is large.",
+  },
+  {
     version: "1.17.0",
     date: "2026-11-22",
     summary: "Seed data is no longer capped/trimmed (accuracy over brevity); stale incorrectly-named seed templates from older versions (e.g. \"1g Egg\"/\"1g Eggs\") are now cleaned up automatically; fixed extra empty space below the Maintenance card when collapsed.",
@@ -987,6 +992,19 @@ async function refreshDataView() {
     ? state.templates.filter((template) => String(template.name || "").toLowerCase().includes(query))
     : state.templates;
 
+  // With thousands of seeded templates now available, rendering the full
+  // unfiltered list into the DOM would be slow and overwhelming. Require a
+  // search term once the list grows large; small/custom lists still show
+  // everything by default like before.
+  const UNFILTERED_DISPLAY_LIMIT = 150;
+  if (!query && state.templates.length > UNFILTERED_DISPLAY_LIMIT) {
+    const promptNode = document.createElement("li");
+    promptNode.className = "list-item";
+    promptNode.textContent = `Type to search ${state.templates.length} templates...`;
+    ui.templateList.appendChild(promptNode);
+    return;
+  }
+
   const sortedTemplates = [...filteredTemplates].sort((left, right) => {
     const leftIsSeed = left.isSeed ? 1 : 0;
     const rightIsSeed = right.isSeed ? 1 : 0;
@@ -996,7 +1014,11 @@ async function refreshDataView() {
     return String(left.name || "").localeCompare(String(right.name || ""));
   });
 
-  for (const template of sortedTemplates) {
+  const MAX_RENDERED_RESULTS = 200;
+  const truncatedCount = sortedTemplates.length - MAX_RENDERED_RESULTS;
+  const templatesToRender = sortedTemplates.slice(0, MAX_RENDERED_RESULTS);
+
+  for (const template of templatesToRender) {
     const node = document.createElement("li");
     node.className = "list-item cal-entry-row";
 
@@ -1029,6 +1051,11 @@ async function refreshDataView() {
     emptyNode.className = "list-item";
     emptyNode.textContent = "No templates match your search.";
     ui.templateList.appendChild(emptyNode);
+  } else if (truncatedCount > 0) {
+    const moreNode = document.createElement("li");
+    moreNode.className = "list-item";
+    moreNode.textContent = `+${truncatedCount} more match\u2014refine your search to see them.`;
+    ui.templateList.appendChild(moreNode);
   }
 }
 
@@ -1582,6 +1609,37 @@ function addRecord(storeName, value) {
   });
 }
 
+function bulkAddRecords(storeName, values) {
+  // Inserting thousands of seed templates one-by-one (each its own
+  // transaction) is slow; a single shared transaction for the whole batch
+  // is dramatically faster.
+  return new Promise((resolve, reject) => {
+    if (values.length === 0) {
+      resolve();
+      return;
+    }
+    const store = transaction(storeName, "readwrite");
+    let pending = values.length;
+    let settled = false;
+    for (const value of values) {
+      const request = store.add(value);
+      request.onsuccess = () => {
+        pending -= 1;
+        if (pending === 0 && !settled) {
+          settled = true;
+          resolve();
+        }
+      };
+      request.onerror = () => {
+        if (!settled) {
+          settled = true;
+          reject(request.error || new Error("Bulk add failed."));
+        }
+      };
+    }
+  });
+}
+
 function updateRecord(storeName, value) {
   return new Promise((resolve, reject) => {
     const request = transaction(storeName, "readwrite").put(value);
@@ -1655,6 +1713,7 @@ async function ensureSeedData() {
   const jsonSeed = Array.isArray(window.FOOD_TYPE_SEED) ? window.FOOD_TYPE_SEED : [];
   const seeds = jsonSeed.length > 0 ? jsonSeed : fallbackSeeds;
 
+  const recordsToAdd = [];
   for (const seed of seeds) {
     const name = String(seed?.name || "").trim();
     const calories = Number(seed?.calPerUnit);
@@ -1667,12 +1726,17 @@ async function ensureSeedData() {
       continue;
     }
 
-    await addRecord(STORE_TEMPLATES, {
+    recordsToAdd.push({
       name,
       calPerUnit: roundTo(calories, 3),
       isSeed: true,
+      category: typeof seed?.category === "string" ? seed.category : undefined,
     });
     existingNames.add(normalized);
+  }
+
+  if (recordsToAdd.length > 0) {
+    await bulkAddRecords(STORE_TEMPLATES, recordsToAdd);
   }
 }
 
