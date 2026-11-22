@@ -251,6 +251,19 @@ button.danger {
   margin: 0.7rem 0 0;
 }
 
+.summary-actions {
+  margin-top: 0.45rem;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.deep-refresh-button {
+  margin-top: 0;
+  width: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
 .list {
   list-style: none;
   padding: 0;

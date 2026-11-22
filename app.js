@@ -40,6 +40,7 @@ const ui = {
   },
   dailyTotal: document.getElementById("daily-total"),
   caloriesLeft: document.getElementById("calories-left"),
+  deepRefreshBtn: document.getElementById("deep-refresh-btn"),
   showCalAddBtn: document.getElementById("show-cal-add-btn"),
   calEntryModal: document.getElementById("cal-entry-modal"),
   calEntryModalBackdrop: document.getElementById("cal-entry-modal-backdrop"),
@@ -122,6 +123,10 @@ function bindUiEvents() {
 
   ui.showCalAddBtn.addEventListener("click", () => {
     openCalEntryModalForCreate();
+  });
+
+  ui.deepRefreshBtn.addEventListener("click", async () => {
+    await deepRefreshPage();
   });
 
   ui.calEntryCancelBtn.addEventListener("click", () => closeCalEntryModal());
@@ -1498,6 +1503,28 @@ function formatCal(value) {
     return "0";
   }
   return Number(value.toFixed(3)).toString();
+}
+
+async function deepRefreshPage() {
+  ui.deepRefreshBtn.disabled = true;
+  ui.deepRefreshBtn.textContent = "Refreshing...";
+
+  try {
+    if ("caches" in window) {
+      const cacheKeys = await caches.keys();
+      await Promise.all(cacheKeys.map((key) => caches.delete(key)));
+    }
+
+    if ("serviceWorker" in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+    }
+  } catch (_error) {
+  }
+
+  const nextUrl = new URL(window.location.href);
+  nextUrl.searchParams.set("refresh", String(Date.now()));
+  window.location.replace(nextUrl.toString());
 }
 
 function todayString() {
