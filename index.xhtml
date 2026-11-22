@@ -100,10 +100,8 @@
         <input id="cal-entry-id" type="hidden" />
 
         <div class="type-row one-column">
-          <div class="autocomplete-wrap">
-            <input id="cal-item-type-text" type="text" maxlength="80" autocomplete="off" required="required" placeholder="Type" />
-            <ul id="cal-item-type-suggestions" class="autocomplete-list hidden"></ul>
-          </div>
+          <input id="cal-item-type-text" type="text" maxlength="80" autocomplete="off" list="cal-item-type-list" required="required" placeholder="Type" />
+          <datalist id="cal-item-type-list"></datalist>
         </div>
 
         <div class="type-row one-column">

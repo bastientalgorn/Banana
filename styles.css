@@ -320,23 +320,6 @@ button.danger {
   text-overflow: ellipsis;
 }
 
-#item-type-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-#item-type-list .list-item {
-  flex: 0 1 auto;
-  width: auto;
-  max-width: 260px;
-}
-
-#item-type-list .cal-entry-label {
-  flex: 0 1 auto;
-  max-width: 200px;
-}
-
 .cal-entry-columns {
   display: grid;
   grid-template-columns: 44px 1fr 170px 90px 30px 30px;
@@ -410,43 +393,6 @@ button.danger {
   border-radius: 999px;
   font-size: 1rem;
   line-height: 1;
-}
-
-.autocomplete-wrap {
-  position: relative;
-}
-
-.autocomplete-list {
-  position: absolute;
-  z-index: 20;
-  top: calc(100% + 0.2rem);
-  left: 0;
-  right: 0;
-  max-height: 220px;
-  overflow-y: auto;
-  list-style: none;
-  margin: 0;
-  padding: 0.25rem 0;
-  background: #0f1723;
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
-}
-
-.autocomplete-item {
-  padding: 0.5rem 0.75rem;
-  font-size: 1rem;
-  color: var(--text);
-  cursor: pointer;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.autocomplete-item:hover,
-.autocomplete-item.highlighted {
-  background: var(--accent-2);
-  color: #081018;
 }
 
 .item-main {

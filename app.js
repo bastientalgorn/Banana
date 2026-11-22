@@ -49,7 +49,7 @@ const ui = {
   calEntryCancelBtn: document.getElementById("cal-entry-cancel-btn"),
   calEntryDeleteBtn: document.getElementById("cal-entry-delete-btn"),
   calItemTypeText: document.getElementById("cal-item-type-text"),
-  calItemTypeSuggestions: document.getElementById("cal-item-type-suggestions"),
+  calItemTypeList: document.getElementById("cal-item-type-list"),
   calItemCal: document.getElementById("cal-item-cal"),
   calQuantity: document.getElementById("cal-quantity"),
   calTotalCalories: document.getElementById("cal-total-calories"),
@@ -128,12 +128,7 @@ function bindUiEvents() {
   ui.calEntryModalBackdrop.addEventListener("click", () => closeCalEntryModal());
 
   ui.calItemTypeText.addEventListener("input", async () => {
-    renderItemTypeSuggestions();
     await syncCalModalTypeFields({ autoSuggestQuantity: true });
-  });
-
-  ui.calItemTypeText.addEventListener("blur", () => {
-    hideItemTypeSuggestions();
   });
 
   ui.calItemTypeText.addEventListener("change", async () => {
@@ -478,48 +473,11 @@ async function reloadItemTypesAndRefresh() {
 }
 
 function syncItemTypeSelects() {
-  // Item type names are now suggested via a custom dropdown (renderItemTypeSuggestions)
-  // instead of a native <datalist>, since datalist autocomplete is unreliable on Android.
-}
+  const datalistOptions = state.itemTypes
+    .map((itemType) => `<option value="${escapeHtml(itemType.name)}"></option>`)
+    .join("");
 
-function renderItemTypeSuggestions() {
-  const query = String(ui.calItemTypeText.value || "").trim().toLowerCase();
-
-  if (!query) {
-    ui.calItemTypeSuggestions.innerHTML = "";
-    ui.calItemTypeSuggestions.classList.add("hidden");
-    return;
-  }
-
-  const matches = state.itemTypes.filter((itemType) => itemType.name.toLowerCase().includes(query));
-
-  ui.calItemTypeSuggestions.innerHTML = "";
-
-  if (matches.length === 0) {
-    ui.calItemTypeSuggestions.classList.add("hidden");
-    return;
-  }
-
-  const limited = matches.slice(0, 20);
-  for (const itemType of limited) {
-    const item = document.createElement("li");
-    item.className = "autocomplete-item";
-    item.textContent = itemType.name;
-    item.addEventListener("pointerdown", (event) => {
-      // pointerdown (before blur) so selection registers even on touch devices.
-      event.preventDefault();
-      ui.calItemTypeText.value = itemType.name;
-      ui.calItemTypeSuggestions.classList.add("hidden");
-      void syncCalModalTypeFields({ autoSuggestQuantity: true });
-    });
-    ui.calItemTypeSuggestions.appendChild(item);
-  }
-
-  ui.calItemTypeSuggestions.classList.remove("hidden");
-}
-
-function hideItemTypeSuggestions() {
-  ui.calItemTypeSuggestions.classList.add("hidden");
+  ui.calItemTypeList.innerHTML = datalistOptions;
 }
 
 async function refreshCalView() {
@@ -926,7 +884,6 @@ function closeCalEntryModal() {
   ui.calTotalCalories.textContent = "--";
   ui.calEntrySubmitBtn.disabled = false;
   resetDeleteButton(ui.calEntryDeleteBtn);
-  hideItemTypeSuggestions();
   ui.calEntryModal.classList.add("hidden");
   updateBodyModalState();
 }
