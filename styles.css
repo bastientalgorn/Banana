@@ -24,7 +24,7 @@ body {
 }
 
 html {
-  font-size: 140%;
+  font-size: 105%;
 }
 
 body {
@@ -58,7 +58,7 @@ body {
   border-radius: 999px;
   padding: 0.7rem 0.4rem;
   font-weight: 600;
-  min-height: 50px;
+  min-height: 25px;
 }
 
 .tab-button.active {
@@ -129,8 +129,8 @@ h2 {
 .date-picker-button {
   width: 50px;
   min-width: 50px;
-  height: 50px;
-  min-height: 50px;
+  height: 25px;
+  min-height: 25px;
   margin: 0;
 }
 
@@ -143,9 +143,9 @@ h2 {
 .type-row {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 0.45rem;
+  gap: 0.225rem;
   align-items: center;
-  margin-top: 0.45rem;
+  margin-top: 0.225rem;
 }
 
 .type-row.one-column {
@@ -158,16 +158,16 @@ h2 {
   padding: 0.62rem 0.7rem;
   font-size: 1rem;
   white-space: nowrap;
-  min-height: 50px;
+  min-height: 25px;
   min-width: 50px;
 }
 
 .quantity-row {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto;
-  gap: 0.4rem;
+  gap: 0.2rem;
   align-items: center;
-  margin-top: 0.55rem;
+  margin-top: 0.275rem;
 }
 
 .quantity-total-row {
@@ -224,8 +224,8 @@ h2 {
 .qty-adjust-button {
   width: 50px;
   min-width: 50px;
-  height: 50px;
-  min-height: 50px;
+  height: 25px;
+  min-height: 25px;
   margin: 0;
   padding: 0;
   border-radius: 999px;
@@ -270,7 +270,7 @@ button {
   color: #081018;
   border: none;
   font-weight: 700;
-  min-height: 50px;
+  min-height: 25px;
   min-width: 50px;
 }
 
@@ -393,8 +393,8 @@ button.danger {
   margin: 0;
   width: 50px;
   min-width: 50px;
-  height: 50px;
-  min-height: 50px;
+  height: 25px;
+  min-height: 25px;
   padding: 0;
   border-radius: 999px;
   font-size: 1rem;
@@ -423,7 +423,7 @@ button.danger {
 .row-actions {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 0.5rem;
+  gap: 0.25rem;
 }
 
 .row-actions.two-columns {
@@ -457,23 +457,23 @@ button.danger {
   z-index: 1;
   width: min(var(--window-max-width), 100%);
   max-width: var(--window-max-width);
-  margin-top: 0.45rem;
+  margin-top: 0.225rem;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 0.55rem;
+  padding: 0.275rem;
   box-shadow: 0 14px 38px rgba(0, 0, 0, 0.45);
 }
 
 .modal-panel form {
   display: grid;
-  gap: 0.45rem;
+  gap: 0.225rem;
 }
 
 .modal-panel input,
 .modal-panel button {
   min-width: 0;
-  padding: 0.58rem;
+  padding: 0.29rem;
   font-size: 1rem;
 }
 
@@ -485,8 +485,8 @@ body.modal-open {
   width: 100%;
   min-width: 0;
   height: auto;
-  margin-top: 0.7rem;
-  padding: 0.58rem;
+  margin-top: 0.35rem;
+  padding: 0.29rem;
   border-radius: 9px;
   background: var(--accent-2);
   color: #081018;
