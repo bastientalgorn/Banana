@@ -9,6 +9,34 @@ const SETTING_DAILY_CALORIE_TARGET = "dailyCalorieTarget";
 const SETTING_WEIGHT_TARGET = "weightTarget";
 const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
+const APP_CHANGELOG = [
+  {
+    version: "1.11.0",
+    date: "2026-11-22",
+    summary: "Data tab now shows the app version and a changelog of the 5 most recent updates.",
+  },
+  {
+    version: "1.10.0",
+    date: "2026-11-22",
+    summary: "Entries now snapshot their own name, calories, and color instead of referencing the item type live, so editing/copying an entry never changes the item type or other entries.",
+  },
+  {
+    version: "1.9.0",
+    date: "2026-11-22",
+    summary: "Data tab: Deep refresh moved to the top, custom item types now reliably sort before predefined ones, and the item type edit form has a color picker.",
+  },
+  {
+    version: "1.8.0",
+    date: "2026-11-22",
+    summary: "Data tab: custom item types are listed before predefined ones, each with a color dot.",
+  },
+  {
+    version: "1.7.0",
+    date: "2026-11-22",
+    summary: "Added a \u00b1 sign-toggle button next to calorie fields, since Android keyboards often hide the minus key.",
+  },
+];
+const APP_VERSION = APP_CHANGELOG[0]?.version || "0.0.0";
 const ITEM_TYPE_COLOR_PALETTE = [
   "#ff6b6b",
   "#ffa94d",
@@ -116,6 +144,8 @@ const ui = {
   itemTypeEditColorPickerRow: document.getElementById("item-type-edit-color-picker-row"),
   deepRefreshBtn: document.getElementById("deep-refresh-btn"),
   deepRefreshStatus: document.getElementById("deep-refresh-status"),
+  appVersionNumber: document.getElementById("app-version-number"),
+  changelogList: document.getElementById("changelog-list"),
   listTemplate: document.getElementById("simple-list-item-template"),
 };
 
@@ -123,6 +153,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindUiEvents();
   buildColorSwatches(ui.calColorPickerRow);
   buildColorSwatches(ui.itemTypeEditColorPickerRow);
+  renderVersionInfo();
   state.db = await openDatabase();
   await ensureDefaultSettings();
   await migrateLegacy100gItemTypes();
@@ -507,6 +538,43 @@ function switchTab(tabName) {
   Object.entries(ui.tabSections).forEach(([name, section]) => {
     section.classList.toggle("active", name === tabName);
   });
+}
+
+function renderVersionInfo() {
+  ui.appVersionNumber.textContent = APP_VERSION;
+  ui.changelogList.innerHTML = "";
+
+  const recentEntries = APP_CHANGELOG.slice(0, 5);
+  for (const change of recentEntries) {
+    const node = document.createElement("li");
+    node.className = "list-item changelog-item";
+
+    const header = document.createElement("div");
+    header.className = "changelog-header";
+    const versionSpan = document.createElement("span");
+    versionSpan.className = "changelog-version";
+    versionSpan.textContent = `v${change.version}`;
+    const dateSpan = document.createElement("span");
+    dateSpan.className = "changelog-date";
+    dateSpan.textContent = change.date;
+    header.appendChild(versionSpan);
+    header.appendChild(dateSpan);
+
+    const summary = document.createElement("p");
+    summary.className = "changelog-summary";
+    summary.textContent = change.summary;
+
+    node.appendChild(header);
+    node.appendChild(summary);
+    ui.changelogList.appendChild(node);
+  }
+
+  if (recentEntries.length === 0) {
+    const emptyNode = document.createElement("li");
+    emptyNode.className = "list-item";
+    emptyNode.textContent = "No changelog entries yet.";
+    ui.changelogList.appendChild(emptyNode);
+  }
 }
 
 async function reloadItemTypesAndRefresh() {
