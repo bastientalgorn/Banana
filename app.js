@@ -800,13 +800,28 @@ async function refreshDataView() {
     ? state.itemTypes.filter((itemType) => String(itemType.name || "").toLowerCase().includes(query))
     : state.itemTypes;
 
-  for (const itemType of filteredItemTypes) {
+  const sortedItemTypes = [...filteredItemTypes].sort((left, right) => {
+    const leftIsSeed = left.isSeed ? 1 : 0;
+    const rightIsSeed = right.isSeed ? 1 : 0;
+    if (leftIsSeed !== rightIsSeed) {
+      return leftIsSeed - rightIsSeed;
+    }
+    return String(left.name || "").localeCompare(String(right.name || ""));
+  });
+
+  for (const itemType of sortedItemTypes) {
     const node = document.createElement("li");
     node.className = "list-item cal-entry-row";
 
     const label = document.createElement("span");
     label.className = "cal-entry-label";
-    label.textContent = `${itemType.name} (${formatCal(itemType.calPerUnit)} kcal)`;
+    const colorDot = document.createElement("span");
+    colorDot.className = "entry-color-dot";
+    colorDot.style.backgroundColor = getItemTypeColor(itemType);
+    const labelText = document.createElement("span");
+    labelText.textContent = `${itemType.name} (${formatCal(itemType.calPerUnit)} kcal)`;
+    label.appendChild(colorDot);
+    label.appendChild(labelText);
 
     const editButton = document.createElement("button");
     editButton.type = "button";
@@ -822,7 +837,7 @@ async function refreshDataView() {
     ui.itemTypeList.appendChild(node);
   }
 
-  if (filteredItemTypes.length === 0) {
+  if (sortedItemTypes.length === 0) {
     const emptyNode = document.createElement("li");
     emptyNode.className = "list-item";
     emptyNode.textContent = "No item types match your search.";
@@ -1426,6 +1441,7 @@ async function ensureSeedData() {
     await addRecord(STORE_ITEM_TYPES, {
       name,
       calPerUnit: roundTo(calories, 3),
+      isSeed: true,
     });
     existingNames.add(normalized);
   }
