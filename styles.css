@@ -207,7 +207,7 @@ h2 {
 }
 
 .date-time-row {
-  grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
 .date-time-row #cal-entry-date,
@@ -287,19 +287,6 @@ button.danger {
 
 .summary {
   margin: 0;
-}
-
-.summary-actions {
-  margin-top: 0.45rem;
-  display: flex;
-  justify-content: flex-start;
-}
-
-.deep-refresh-button {
-  margin-top: 0;
-  width: auto;
-  padding-left: 1rem;
-  padding-right: 1rem;
 }
 
 .list {
