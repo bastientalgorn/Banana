@@ -22,6 +22,7 @@ No large tab title is shown inside each tab page.
 - `id`
 - `name`
 - `calPerUnit` (can be positive, negative, and decimal)
+- `color` (hex string, chosen from a fixed 10-color palette; defaults to the first palette color)
 
 ### `CalEntry`
 - `id`
@@ -44,6 +45,7 @@ No large tab title is shown inside each tab page.
 
 ### Entry list style
 - Entries are shown in a compact one-line row.
+- Each row shows a small color dot matching the item type's color, before the name.
 - Each row has a small pen icon (`✎`) to edit.
 
 ### Add entry flow (simplified)
@@ -52,7 +54,8 @@ No large tab title is shown inside each tab page.
 - Add form layout:
 	- Row 1: type text field (placeholder `Type`) + small `New type` button.
 	- Row 2: `Quantity` + quantity input + `+` and `-` buttons on same line.
-	- Row 3: `Add` and `Cancel` buttons.
+	- Row 3 (below date/time, above actions): row of 10 small circular color swatches (fixed palette), one highlighted as selected. Picking a color updates the color stored on the entry's item type.
+	- Row 4: `Add` and `Cancel` buttons.
 
 ### Smart quantity default
 - When a type is selected/typed:

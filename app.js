@@ -9,6 +9,19 @@ const SETTING_DAILY_CALORIE_TARGET = "dailyCalorieTarget";
 const SETTING_WEIGHT_TARGET = "weightTarget";
 const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
+const ITEM_TYPE_COLOR_PALETTE = [
+  "#ff6b6b",
+  "#ffa94d",
+  "#ffd166",
+  "#a9e34b",
+  "#51cf66",
+  "#38d9a9",
+  "#6ea8fe",
+  "#748ffc",
+  "#cc5de8",
+  "#f783ac",
+];
+const DEFAULT_ITEM_TYPE_COLOR = ITEM_TYPE_COLOR_PALETTE[0];
 
 const TORONTO_DATE_FORMATTER = new Intl.DateTimeFormat("en-CA", {
   timeZone: APP_TIME_ZONE,
@@ -29,6 +42,7 @@ const state = {
   db: null,
   itemTypes: [],
   selectedDate: todayString(),
+  calColorManuallySet: false,
 };
 
 const ui = {
@@ -55,6 +69,7 @@ const ui = {
   calTotalCalories: document.getElementById("cal-total-calories"),
   calEntryDate: document.getElementById("cal-entry-date"),
   calEntryTime: document.getElementById("cal-entry-time"),
+  calColorPickerRow: document.getElementById("cal-color-picker-row"),
   qtyPlusBtn: document.getElementById("qty-plus-btn"),
   qtyMinusBtn: document.getElementById("qty-minus-btn"),
   calEntryList: document.getElementById("cal-entry-list"),
@@ -100,6 +115,7 @@ const ui = {
 
 document.addEventListener("DOMContentLoaded", async () => {
   bindUiEvents();
+  buildColorSwatches();
   state.db = await openDatabase();
   await ensureDefaultSettings();
   await migrateLegacy100gItemTypes();
@@ -545,7 +561,13 @@ async function refreshCalView() {
 
     const nameNode = document.createElement("span");
     nameNode.className = "cal-col cal-col-name";
-    nameNode.textContent = displayName;
+    const colorDot = document.createElement("span");
+    colorDot.className = "entry-color-dot";
+    colorDot.style.backgroundColor = getItemTypeColor(itemType);
+    const nameText = document.createElement("span");
+    nameText.textContent = displayName;
+    nameNode.appendChild(colorDot);
+    nameNode.appendChild(nameText);
 
     const totalNode = document.createElement("span");
     totalNode.className = "cal-col cal-col-total";
@@ -795,25 +817,33 @@ async function saveCalEntryFromModal() {
   const caloriesPerItem = parseCaloryPerItemInput(ui.calItemCal.value);
 
   const roundedCalories = roundTo(caloriesPerItem, 3);
+  const selectedColor = getSelectedColor();
   let selectedItemType = findItemTypeByName(typeName);
   if (!selectedItemType) {
     const createdId = await addRecord(STORE_ITEM_TYPES, {
       name: typeName,
       calPerUnit: roundedCalories,
+      color: selectedColor,
     });
     selectedItemType = {
       id: createdId,
       name: typeName,
       calPerUnit: roundedCalories,
+      color: selectedColor,
     };
-  } else if (roundTo(Number(selectedItemType.calPerUnit), 3) !== roundedCalories) {
+  } else if (
+    roundTo(Number(selectedItemType.calPerUnit), 3) !== roundedCalories ||
+    getItemTypeColor(selectedItemType) !== selectedColor
+  ) {
     await updateRecord(STORE_ITEM_TYPES, {
       ...selectedItemType,
       calPerUnit: roundedCalories,
+      color: selectedColor,
     });
     selectedItemType = {
       ...selectedItemType,
       calPerUnit: roundedCalories,
+      color: selectedColor,
     };
   }
 
@@ -851,6 +881,7 @@ function openCalEntryModalForCreate(prefill = null) {
   ui.calEntryId.value = "";
   ui.calEntrySubmitBtn.textContent = "Add";
   resetDeleteButton(ui.calEntryDeleteBtn);
+  state.calColorManuallySet = false;
   const nextDate = prefill?.date || state.selectedDate || todayString();
   const nextTime = normalizeTimeString(prefill?.time) || currentTimeString();
   const nextTypeName = String(prefill?.typeName || "");
@@ -860,6 +891,8 @@ function openCalEntryModalForCreate(prefill = null) {
   ui.calItemTypeText.value = nextTypeName;
   ui.calQuantity.value = String(nextQuantity);
   ui.calItemCal.value = Number.isFinite(prefill?.calPerItem) ? String(prefill.calPerItem) : "";
+  const prefillType = nextTypeName ? findItemTypeByName(nextTypeName) : null;
+  setSelectedColor(prefillType ? getItemTypeColor(prefillType) : DEFAULT_ITEM_TYPE_COLOR);
   void syncCalModalTypeFields({ autoSuggestQuantity: true, preserveManualCalories: true });
   refreshCalModalComputedFields();
   ui.calEntryModal.classList.remove("hidden");
@@ -877,6 +910,8 @@ function openCalEntryModalForEdit(entry) {
   ui.calItemCal.value = itemType ? String(itemType.calPerUnit) : "";
   ui.calEntrySubmitBtn.textContent = "Save";
   resetDeleteButton(ui.calEntryDeleteBtn);
+  state.calColorManuallySet = false;
+  setSelectedColor(getItemTypeColor(itemType));
   refreshCalModalComputedFields();
   ui.calEntryModal.classList.remove("hidden");
   updateBodyModalState();
@@ -972,6 +1007,40 @@ function findItemTypeByName(name) {
   return state.itemTypes.find((itemType) => itemType.name.trim().toLowerCase() === normalized) || null;
 }
 
+function getItemTypeColor(itemType) {
+  const color = itemType && itemType.color ? String(itemType.color) : "";
+  return ITEM_TYPE_COLOR_PALETTE.includes(color) ? color : DEFAULT_ITEM_TYPE_COLOR;
+}
+
+function buildColorSwatches() {
+  ui.calColorPickerRow.innerHTML = "";
+  ITEM_TYPE_COLOR_PALETTE.forEach((color) => {
+    const swatch = document.createElement("button");
+    swatch.type = "button";
+    swatch.className = "color-swatch";
+    swatch.style.backgroundColor = color;
+    swatch.dataset.color = color;
+    swatch.setAttribute("aria-label", `Select color ${color}`);
+    swatch.addEventListener("click", () => {
+      state.calColorManuallySet = true;
+      setSelectedColor(color);
+    });
+    ui.calColorPickerRow.appendChild(swatch);
+  });
+}
+
+function setSelectedColor(color) {
+  const safeColor = ITEM_TYPE_COLOR_PALETTE.includes(color) ? color : DEFAULT_ITEM_TYPE_COLOR;
+  ui.calColorPickerRow.querySelectorAll(".color-swatch").forEach((swatch) => {
+    swatch.classList.toggle("selected", swatch.dataset.color === safeColor);
+  });
+}
+
+function getSelectedColor() {
+  const selected = ui.calColorPickerRow.querySelector(".color-swatch.selected");
+  return selected ? selected.dataset.color : DEFAULT_ITEM_TYPE_COLOR;
+}
+
 async function populateSuggestedQuantityForTypeName(typeName) {
   const itemType = findItemTypeByName(typeName);
   if (!itemType) {
@@ -990,6 +1059,10 @@ async function syncCalModalTypeFields(options = {}) {
   if (knownType) {
     if (!preserveManualCalories) {
       ui.calItemCal.value = String(knownType.calPerUnit);
+    }
+
+    if (!state.calColorManuallySet) {
+      setSelectedColor(getItemTypeColor(knownType));
     }
 
     if (autoSuggestQuantity && !ui.calEntryId.value) {
@@ -1074,6 +1147,7 @@ async function createItemType(nameInput, calInput) {
   return addRecord(STORE_ITEM_TYPES, {
     name,
     calPerUnit: roundTo(calories, 3),
+    color: DEFAULT_ITEM_TYPE_COLOR,
   });
 }
 
