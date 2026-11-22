@@ -329,7 +329,7 @@ button.danger {
 
 .cal-entry-columns {
   display: grid;
-  grid-template-columns: 44px 1fr 170px 90px 30px 30px;
+  grid-template-columns: 44px 1fr 60px 90px 30px 30px;
   align-items: center;
   gap: 0.45rem;
 }
@@ -521,7 +521,7 @@ body.modal-open {
 
 @media (max-width: 700px) {
   .cal-entry-columns {
-    grid-template-columns: 36px minmax(0, 1fr) 110px 72px 26px 26px;
+    grid-template-columns: 36px minmax(0, 1fr) 46px 72px 26px 26px;
     gap: 0.3rem;
   }
 

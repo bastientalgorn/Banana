@@ -549,7 +549,7 @@ async function refreshCalView() {
 
     const totalNode = document.createElement("span");
     totalNode.className = "cal-col cal-col-total";
-    totalNode.textContent = `${Math.round(lineTotal)} kcal`;
+    totalNode.textContent = `${Math.round(lineTotal)}`;
 
     const timeNode = document.createElement("span");
     timeNode.className = "cal-col cal-col-time";
