@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.13.0",
+    date: "2026-11-22",
+    summary: "Changelog is now one flat text line per version (no boxes), and version number is no longer shown separately since it's implied by the top entry.",
+  },
+  {
     version: "1.12.0",
     date: "2026-11-22",
     summary: "Moved version/changelog into the Maintenance card (under Deep refresh) and added a Hide/Show toggle for the whole Maintenance box.",
@@ -144,7 +149,6 @@ const ui = {
   itemTypeEditColorPickerRow: document.getElementById("item-type-edit-color-picker-row"),
   deepRefreshBtn: document.getElementById("deep-refresh-btn"),
   deepRefreshStatus: document.getElementById("deep-refresh-status"),
-  appVersionNumber: document.getElementById("app-version-number"),
   changelogList: document.getElementById("changelog-list"),
   maintenanceBody: document.getElementById("maintenance-body"),
   maintenanceToggleBtn: document.getElementById("maintenance-toggle-btn"),
@@ -549,37 +553,19 @@ function switchTab(tabName) {
 }
 
 function renderVersionInfo() {
-  ui.appVersionNumber.textContent = APP_VERSION;
   ui.changelogList.innerHTML = "";
 
   const recentEntries = APP_CHANGELOG.slice(0, 5);
   for (const change of recentEntries) {
     const node = document.createElement("li");
-    node.className = "list-item changelog-item";
-
-    const header = document.createElement("div");
-    header.className = "changelog-header";
-    const versionSpan = document.createElement("span");
-    versionSpan.className = "changelog-version";
-    versionSpan.textContent = `v${change.version}`;
-    const dateSpan = document.createElement("span");
-    dateSpan.className = "changelog-date";
-    dateSpan.textContent = change.date;
-    header.appendChild(versionSpan);
-    header.appendChild(dateSpan);
-
-    const summary = document.createElement("p");
-    summary.className = "changelog-summary";
-    summary.textContent = change.summary;
-
-    node.appendChild(header);
-    node.appendChild(summary);
+    node.className = "changelog-line";
+    node.textContent = `v${change.version} (${change.date}) \u2014 ${change.summary}`;
     ui.changelogList.appendChild(node);
   }
 
   if (recentEntries.length === 0) {
     const emptyNode = document.createElement("li");
-    emptyNode.className = "list-item";
+    emptyNode.className = "changelog-line";
     emptyNode.textContent = "No changelog entries yet.";
     ui.changelogList.appendChild(emptyNode);
   }
