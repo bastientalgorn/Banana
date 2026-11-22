@@ -68,7 +68,7 @@ body {
 }
 
 main {
-  padding-top: 0.8rem;
+  padding-top: 0.2rem;
   padding-bottom: 1rem;
 }
 
@@ -94,7 +94,7 @@ h2 {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 0.8rem;
+  padding: 0.6rem 0.8rem;
   margin-bottom: 0.8rem;
 }
 
@@ -286,7 +286,7 @@ button.danger {
 }
 
 .summary {
-  margin: 0.7rem 0 0;
+  margin: 0;
 }
 
 .summary-actions {
