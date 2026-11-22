@@ -589,7 +589,7 @@ async function refreshCalView() {
       continue;
     }
 
-    const lineTotal = itemType.calPerUnit * entry.quantity;
+    const lineTotal = getEntryCalPerItem(entry, itemType) * entry.quantity;
     if (entry.date === today) {
       total += lineTotal;
     }
@@ -623,7 +623,7 @@ async function refreshCalView() {
     nameNode.className = "cal-col cal-col-name";
     const colorDot = document.createElement("span");
     colorDot.className = "entry-color-dot";
-    colorDot.style.backgroundColor = getItemTypeColor(itemType);
+    colorDot.style.backgroundColor = getEntryColor(entry, itemType);
     const nameText = document.createElement("span");
     nameText.textContent = displayName;
     nameNode.appendChild(colorDot);
@@ -649,7 +649,8 @@ async function refreshCalView() {
         quantity: entry.quantity,
         date: todayString(),
         time: currentTimeString(),
-        calPerItem: itemType.calPerUnit,
+        calPerItem: getEntryCalPerItem(entry, itemType),
+        color: getEntryColor(entry, itemType),
       });
     });
 
@@ -906,20 +907,6 @@ async function saveCalEntryFromModal() {
       calPerUnit: roundedCalories,
       color: selectedColor,
     };
-  } else if (
-    roundTo(Number(selectedItemType.calPerUnit), 3) !== roundedCalories ||
-    getItemTypeColor(selectedItemType) !== selectedColor
-  ) {
-    await updateRecord(STORE_ITEM_TYPES, {
-      ...selectedItemType,
-      calPerUnit: roundedCalories,
-      color: selectedColor,
-    });
-    selectedItemType = {
-      ...selectedItemType,
-      calPerUnit: roundedCalories,
-      color: selectedColor,
-    };
   }
 
   const editingEntryId = Number(ui.calEntryId.value);
@@ -936,6 +923,8 @@ async function saveCalEntryFromModal() {
       itemTypeId: selectedItemType.id,
       quantity,
       createdAt: selectedTime,
+      calPerItem: roundedCalories,
+      color: selectedColor,
     });
     return true;
   }
@@ -946,6 +935,8 @@ async function saveCalEntryFromModal() {
     quantity,
     customName: "",
     createdAt: selectedTime,
+    calPerItem: roundedCalories,
+    color: selectedColor,
   });
 
   return true;
@@ -967,7 +958,13 @@ function openCalEntryModalForCreate(prefill = null) {
   ui.calQuantity.value = String(nextQuantity);
   ui.calItemCal.value = Number.isFinite(prefill?.calPerItem) ? String(prefill.calPerItem) : "";
   const prefillType = nextTypeName ? findItemTypeByName(nextTypeName) : null;
-  setSelectedColor(ui.calColorPickerRow, prefillType ? getItemTypeColor(prefillType) : DEFAULT_ITEM_TYPE_COLOR);
+  const prefillColor = prefill && prefill.color ? String(prefill.color) : "";
+  if (ITEM_TYPE_COLOR_PALETTE.includes(prefillColor)) {
+    state.calColorManuallySet = true;
+    setSelectedColor(ui.calColorPickerRow, prefillColor);
+  } else {
+    setSelectedColor(ui.calColorPickerRow, prefillType ? getItemTypeColor(prefillType) : DEFAULT_ITEM_TYPE_COLOR);
+  }
   void syncCalModalTypeFields({ autoSuggestQuantity: true, preserveManualCalories: true });
   refreshCalModalComputedFields();
   ui.calEntryModal.classList.remove("hidden");
@@ -982,11 +979,11 @@ function openCalEntryModalForEdit(entry) {
   ui.calQuantity.value = String(entry.quantity);
   ui.calEntryDate.value = entry.date || state.selectedDate || todayString();
   ui.calEntryTime.value = normalizeTimeString(entry.createdAt) || currentTimeString();
-  ui.calItemCal.value = itemType ? String(itemType.calPerUnit) : "";
+  ui.calItemCal.value = String(getEntryCalPerItem(entry, itemType));
   ui.calEntrySubmitBtn.textContent = "Save";
   resetDeleteButton(ui.calEntryDeleteBtn);
-  state.calColorManuallySet = false;
-  setSelectedColor(ui.calColorPickerRow, getItemTypeColor(itemType));
+  state.calColorManuallySet = true;
+  setSelectedColor(ui.calColorPickerRow, getEntryColor(entry, itemType));
   refreshCalModalComputedFields();
   ui.calEntryModal.classList.remove("hidden");
   updateBodyModalState();
@@ -1086,6 +1083,22 @@ function findItemTypeByName(name) {
 function getItemTypeColor(itemType) {
   const color = itemType && itemType.color ? String(itemType.color) : "";
   return ITEM_TYPE_COLOR_PALETTE.includes(color) ? color : DEFAULT_ITEM_TYPE_COLOR;
+}
+
+function getEntryCalPerItem(entry, itemType) {
+  const override = Number(entry?.calPerItem);
+  if (Number.isFinite(override)) {
+    return override;
+  }
+  return Number(itemType?.calPerUnit) || 0;
+}
+
+function getEntryColor(entry, itemType) {
+  const override = entry && entry.color ? String(entry.color) : "";
+  if (ITEM_TYPE_COLOR_PALETTE.includes(override)) {
+    return override;
+  }
+  return getItemTypeColor(itemType);
 }
 
 function buildColorSwatches(rowElement) {

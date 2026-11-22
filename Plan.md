@@ -30,6 +30,8 @@ No large tab title is shown inside each tab page.
 - `itemTypeId`
 - `quantity`
 - `createdAt` (`HH:MM`, auto-set on creation)
+- `calPerItem` (snapshot of calories per item at creation/edit time; independent of the item type's current `calPerUnit`)
+- `color` (snapshot of the color at creation/edit time; independent of the item type's current `color`)
 
 ### `WeightEntry`
 - `date` (`YYYY-MM-DD`)
@@ -45,7 +47,7 @@ No large tab title is shown inside each tab page.
 
 ### Entry list style
 - Entries are shown in a compact one-line row.
-- Each row shows a small color dot matching the item type's color, before the name.
+- Each row shows a small color dot matching that entry's own stored color, before the name.
 - Each row has a small pen icon (`✎`) to edit.
 
 ### Add entry flow (simplified)
@@ -54,8 +56,14 @@ No large tab title is shown inside each tab page.
 - Add form layout:
 	- Row 1: type text field (placeholder `Type`) + small `New type` button.
 	- Row 2: `Quantity` + quantity input + `+` and `-` buttons on same line.
-	- Row 3 (below date/time, above actions): row of 10 small circular color swatches (fixed palette), one highlighted as selected. Picking a color updates the color stored on the entry's item type.
+	- Row 3 (below date/time, above actions): row of 10 small circular color swatches (fixed palette), one highlighted as selected.
 	- Row 4: `Add` and `Cancel` buttons.
+
+### Item type vs. per-entry calories/color (important)
+- Creating an entry with a **new** type name creates a new `ItemType`, initialized with the entered calories-per-item and selected color.
+- Creating an entry with an **existing** type name never creates or modifies that `ItemType`. The entered calories-per-item and selected color are stored only on the new `CalEntry` (as `calPerItem` / `color`), as a snapshot independent from the item type.
+- Editing an existing entry's calories or color only updates that entry's snapshot; it never changes the underlying `ItemType`, and never affects other entries (including copies) of the same type.
+- Copying an entry (⧉ button) carries over that entry's own snapshot values (not the item type's current values) to the new entry.
 
 ### Smart quantity default
 - When a type is selected/typed:
