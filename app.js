@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.13.1",
+    date: "2026-11-22",
+    summary: "Removed the \"Version history\" heading above the changelog in the Maintenance card.",
+  },
+  {
     version: "1.13.0",
     date: "2026-11-22",
     summary: "Changelog is now one flat text line per version (no boxes), and version number is no longer shown separately since it's implied by the top entry.",
