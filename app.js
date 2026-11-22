@@ -567,6 +567,7 @@ async function refreshCalView() {
         quantity: entry.quantity,
         date: todayString(),
         time: currentTimeString(),
+        calPerItem: itemType.calPerUnit,
       });
     });
 
@@ -619,8 +620,13 @@ async function refreshWeightView() {
     node.className = "list-item cal-entry-row";
 
     const label = document.createElement("span");
-    label.className = "cal-entry-label";
-    label.textContent = `${formatProgressDate(record.date)}: ${record.weightKg}`;
+    label.className = "cal-entry-label progress-history-label";
+    const dateSpan = document.createElement("span");
+    dateSpan.textContent = formatProgressDate(record.date);
+    const weightSpan = document.createElement("span");
+    weightSpan.textContent = String(record.weightKg);
+    label.appendChild(dateSpan);
+    label.appendChild(weightSpan);
 
     const editButton = document.createElement("button");
     editButton.type = "button";

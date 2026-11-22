@@ -320,6 +320,13 @@ button.danger {
   text-overflow: ellipsis;
 }
 
+.progress-history-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+}
+
 .cal-entry-columns {
   display: grid;
   grid-template-columns: 44px 1fr 170px 90px 30px 30px;
