@@ -1,6 +1,6 @@
 const DB_NAME = "bananaTrackerDB";
 const DB_VERSION = 2;
-const STORE_ITEM_TYPES = "itemTypes";
+const STORE_TEMPLATES = "itemTypes";
 const STORE_CAL_ENTRIES = "calEntries";
 const STORE_WEIGHT_ENTRIES = "weightEntries";
 const STORE_SETTINGS = "settings";
@@ -10,6 +10,11 @@ const SETTING_WEIGHT_TARGET = "weightTarget";
 const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
+  {
+    version: "1.14.0",
+    date: "2026-11-22",
+    summary: "Renamed \"item type\" to \"template\" everywhere (GUI, code, docs); behavior is unchanged.",
+  },
   {
     version: "1.13.1",
     date: "2026-11-22",
@@ -33,21 +38,21 @@ const APP_CHANGELOG = [
   {
     version: "1.10.0",
     date: "2026-11-22",
-    summary: "Entries now snapshot their own name, calories, and color instead of referencing the item type live, so editing/copying an entry never changes the item type or other entries.",
+    summary: "Entries now snapshot their own name, calories, and color instead of referencing the template live, so editing/copying an entry never changes the template or other entries.",
   },
   {
     version: "1.9.0",
     date: "2026-11-22",
-    summary: "Data tab: Deep refresh moved to the top, custom item types now reliably sort before predefined ones, and the item type edit form has a color picker.",
+    summary: "Data tab: Deep refresh moved to the top, custom templates now reliably sort before predefined ones, and the template edit form has a color picker.",
   },
   {
     version: "1.8.0",
     date: "2026-11-22",
-    summary: "Data tab: custom item types are listed before predefined ones, each with a color dot.",
+    summary: "Data tab: custom templates are listed before predefined ones, each with a color dot.",
   },
 ];
 const APP_VERSION = APP_CHANGELOG[0]?.version || "0.0.0";
-const ITEM_TYPE_COLOR_PALETTE = [
+const TEMPLATE_COLOR_PALETTE = [
   "#ff6b6b",
   "#ffa94d",
   "#ffd166",
@@ -59,7 +64,7 @@ const ITEM_TYPE_COLOR_PALETTE = [
   "#cc5de8",
   "#f783ac",
 ];
-const DEFAULT_ITEM_TYPE_COLOR = ITEM_TYPE_COLOR_PALETTE[0];
+const DEFAULT_TEMPLATE_COLOR = TEMPLATE_COLOR_PALETTE[0];
 
 const TORONTO_DATE_FORMATTER = new Intl.DateTimeFormat("en-CA", {
   timeZone: APP_TIME_ZONE,
@@ -78,7 +83,7 @@ const TORONTO_TIME_FORMATTER = new Intl.DateTimeFormat("en-CA", {
 
 const state = {
   db: null,
-  itemTypes: [],
+  templates: [],
   selectedDate: todayString(),
   calColorManuallySet: false,
 };
@@ -100,8 +105,8 @@ const ui = {
   calEntrySubmitBtn: document.getElementById("cal-entry-submit-btn"),
   calEntryCancelBtn: document.getElementById("cal-entry-cancel-btn"),
   calEntryDeleteBtn: document.getElementById("cal-entry-delete-btn"),
-  calItemTypeText: document.getElementById("cal-item-type-text"),
-  calItemTypeList: document.getElementById("cal-item-type-list"),
+  calTemplateText: document.getElementById("cal-template-text"),
+  calTemplateList: document.getElementById("cal-template-list"),
   calItemCal: document.getElementById("cal-item-cal"),
   calItemCalSignBtn: document.getElementById("cal-item-cal-sign-btn"),
   calQuantity: document.getElementById("cal-quantity"),
@@ -131,27 +136,27 @@ const ui = {
   progressEditMinusBtn: document.getElementById("progress-edit-minus-btn"),
   progressEditCancelBtn: document.getElementById("progress-edit-cancel-btn"),
   progressEditDeleteBtn: document.getElementById("progress-edit-delete-btn"),
-  itemTypeForm: document.getElementById("item-type-form"),
-  itemTypeName: document.getElementById("item-type-name"),
-  itemTypeCal: document.getElementById("item-type-cal"),
-  itemTypeCalSignBtn: document.getElementById("item-type-cal-sign-btn"),
+  templateForm: document.getElementById("template-form"),
+  templateName: document.getElementById("template-name"),
+  templateCal: document.getElementById("template-cal"),
+  templateCalSignBtn: document.getElementById("template-cal-sign-btn"),
   targetsForm: document.getElementById("targets-form"),
   dailyCalorieTarget: document.getElementById("daily-calorie-target"),
   weightTarget: document.getElementById("weight-target"),
-  itemTypeSearch: document.getElementById("item-type-search"),
-  itemTypeList: document.getElementById("item-type-list"),
-  itemTypeModal: document.getElementById("item-type-modal"),
-  itemTypeModalBackdrop: document.getElementById("item-type-modal-backdrop"),
-  itemTypeEditForm: document.getElementById("item-type-edit-form"),
-  itemTypeEditId: document.getElementById("item-type-edit-id"),
-  itemTypeEditName: document.getElementById("item-type-edit-name"),
-  itemTypeEditCal: document.getElementById("item-type-edit-cal"),
-  itemTypeCalPlusBtn: document.getElementById("item-type-cal-plus-btn"),
-  itemTypeCalMinusBtn: document.getElementById("item-type-cal-minus-btn"),
-  itemTypeEditCalSignBtn: document.getElementById("item-type-edit-cal-sign-btn"),
-  itemTypeEditCancelBtn: document.getElementById("item-type-edit-cancel-btn"),
-  itemTypeEditDeleteBtn: document.getElementById("item-type-edit-delete-btn"),
-  itemTypeEditColorPickerRow: document.getElementById("item-type-edit-color-picker-row"),
+  templateSearch: document.getElementById("template-search"),
+  templateList: document.getElementById("template-list"),
+  templateModal: document.getElementById("template-modal"),
+  templateModalBackdrop: document.getElementById("template-modal-backdrop"),
+  templateEditForm: document.getElementById("template-edit-form"),
+  templateEditId: document.getElementById("template-edit-id"),
+  templateEditName: document.getElementById("template-edit-name"),
+  templateEditCal: document.getElementById("template-edit-cal"),
+  templateCalPlusBtn: document.getElementById("template-cal-plus-btn"),
+  templateCalMinusBtn: document.getElementById("template-cal-minus-btn"),
+  templateEditCalSignBtn: document.getElementById("template-edit-cal-sign-btn"),
+  templateEditCancelBtn: document.getElementById("template-edit-cancel-btn"),
+  templateEditDeleteBtn: document.getElementById("template-edit-delete-btn"),
+  templateEditColorPickerRow: document.getElementById("template-edit-color-picker-row"),
   deepRefreshBtn: document.getElementById("deep-refresh-btn"),
   deepRefreshStatus: document.getElementById("deep-refresh-status"),
   changelogList: document.getElementById("changelog-list"),
@@ -163,18 +168,18 @@ const ui = {
 document.addEventListener("DOMContentLoaded", async () => {
   bindUiEvents();
   buildColorSwatches(ui.calColorPickerRow);
-  buildColorSwatches(ui.itemTypeEditColorPickerRow);
+  buildColorSwatches(ui.templateEditColorPickerRow);
   renderVersionInfo();
   state.db = await openDatabase();
   await ensureDefaultSettings();
-  await migrateLegacy100gItemTypes();
+  await migrateLegacy100gTemplates();
   await ensureSeedData();
-  await migrateFlagExistingSeedItemTypes();
-  await simplifyAndPruneItemTypes();
-  state.itemTypes = await listItemTypes();
+  await migrateFlagExistingSeedTemplates();
+  await simplifyAndPruneTemplates();
+  state.templates = await listTemplates();
   ui.weightTodayDate.value = state.selectedDate;
 
-  syncItemTypeSelects();
+  syncTemplateSelects();
   await refreshCalView();
   await refreshWeightView();
   await refreshDataView();
@@ -193,11 +198,11 @@ function bindUiEvents() {
   ui.calEntryCancelBtn.addEventListener("click", () => closeCalEntryModal());
   ui.calEntryModalBackdrop.addEventListener("click", () => closeCalEntryModal());
 
-  ui.calItemTypeText.addEventListener("input", async () => {
+  ui.calTemplateText.addEventListener("input", async () => {
     await syncCalModalTypeFields({ autoSuggestQuantity: true });
   });
 
-  ui.calItemTypeText.addEventListener("change", async () => {
+  ui.calTemplateText.addEventListener("change", async () => {
     await syncCalModalTypeFields({ autoSuggestQuantity: true });
   });
 
@@ -217,7 +222,7 @@ function bindUiEvents() {
         return;
       }
       closeCalEntryModal();
-      await reloadItemTypesAndRefresh();
+      await reloadTemplatesAndRefresh();
     } catch (error) {
       alert(error.message);
     }
@@ -391,12 +396,12 @@ function bindUiEvents() {
     });
   });
 
-  ui.itemTypeForm.addEventListener("submit", async (event) => {
+  ui.templateForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     try {
-      await createItemType(ui.itemTypeName.value, ui.itemTypeCal.value);
-      ui.itemTypeForm.reset();
-      await reloadItemTypesAndRefresh();
+      await createTemplate(ui.templateName.value, ui.templateCal.value);
+      ui.templateForm.reset();
+      await reloadTemplatesAndRefresh();
     } catch (error) {
       alert(error.message);
     }
@@ -447,7 +452,7 @@ function bindUiEvents() {
     });
   });
 
-  ui.itemTypeSearch.addEventListener("input", async () => {
+  ui.templateSearch.addEventListener("input", async () => {
     await refreshDataView();
   });
 
@@ -461,22 +466,22 @@ function bindUiEvents() {
     ui.maintenanceToggleBtn.setAttribute("aria-expanded", String(!isHidden));
   });
 
-  ui.itemTypeModalBackdrop.addEventListener("click", () => {
-    closeItemTypeModal();
+  ui.templateModalBackdrop.addEventListener("click", () => {
+    closeTemplateModal();
   });
 
-  ui.itemTypeEditCancelBtn.addEventListener("click", () => {
-    closeItemTypeModal();
+  ui.templateEditCancelBtn.addEventListener("click", () => {
+    closeTemplateModal();
   });
 
-  ui.itemTypeEditForm.addEventListener("submit", async (event) => {
+  ui.templateEditForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const id = Number(ui.itemTypeEditId.value);
-    const name = ui.itemTypeEditName.value.trim();
-    const calPerUnit = Number(ui.itemTypeEditCal.value);
+    const id = Number(ui.templateEditId.value);
+    const name = ui.templateEditName.value.trim();
+    const calPerUnit = Number(ui.templateEditCal.value);
 
     if (!id) {
-      alert("Item type not found.");
+      alert("Template not found.");
       return;
     }
     if (!name) {
@@ -488,57 +493,57 @@ function bindUiEvents() {
       return;
     }
 
-    const existingItemType = state.itemTypes.find((candidate) => candidate.id === id) || {};
+    const existingTemplate = state.templates.find((candidate) => candidate.id === id) || {};
 
-    await updateRecord(STORE_ITEM_TYPES, {
-      ...existingItemType,
+    await updateRecord(STORE_TEMPLATES, {
+      ...existingTemplate,
       id,
       name,
       calPerUnit: roundTo(calPerUnit, 3),
-      color: getSelectedColor(ui.itemTypeEditColorPickerRow),
+      color: getSelectedColor(ui.templateEditColorPickerRow),
     });
 
-    closeItemTypeModal();
-    await reloadItemTypesAndRefresh();
+    closeTemplateModal();
+    await reloadTemplatesAndRefresh();
   });
 
-  ui.itemTypeEditDeleteBtn.addEventListener("click", async () => {
-    await handleDoubleTapDelete(ui.itemTypeEditDeleteBtn, async () => {
-      const id = Number(ui.itemTypeEditId.value);
+  ui.templateEditDeleteBtn.addEventListener("click", async () => {
+    await handleDoubleTapDelete(ui.templateEditDeleteBtn, async () => {
+      const id = Number(ui.templateEditId.value);
       if (!id) {
         return;
       }
 
-      const usages = await countCalEntriesForItemType(id);
+      const usages = await countCalEntriesForTemplate(id);
       if (usages > 0) {
-        alert("Cannot delete an item type used by calorie entries.");
+        alert("Cannot delete an template used by calorie entries.");
         return;
       }
 
-      await deleteRecord(STORE_ITEM_TYPES, id);
-      closeItemTypeModal();
-      await reloadItemTypesAndRefresh();
+      await deleteRecord(STORE_TEMPLATES, id);
+      closeTemplateModal();
+      await reloadTemplatesAndRefresh();
     });
   });
 
-  ui.itemTypeCalPlusBtn.addEventListener("click", () => {
-    const current = Number(ui.itemTypeEditCal.value || "0");
+  ui.templateCalPlusBtn.addEventListener("click", () => {
+    const current = Number(ui.templateEditCal.value || "0");
     const safeValue = Number.isFinite(current) ? current : 0;
-    ui.itemTypeEditCal.value = String(roundTo(safeValue + 1, 3));
+    ui.templateEditCal.value = String(roundTo(safeValue + 1, 3));
   });
 
-  ui.itemTypeCalMinusBtn.addEventListener("click", () => {
-    const current = Number(ui.itemTypeEditCal.value || "0");
+  ui.templateCalMinusBtn.addEventListener("click", () => {
+    const current = Number(ui.templateEditCal.value || "0");
     const safeValue = Number.isFinite(current) ? current : 0;
-    ui.itemTypeEditCal.value = String(roundTo(safeValue - 1, 3));
+    ui.templateEditCal.value = String(roundTo(safeValue - 1, 3));
   });
 
-  ui.itemTypeEditCalSignBtn.addEventListener("click", () => {
-    toggleInputSign(ui.itemTypeEditCal);
+  ui.templateEditCalSignBtn.addEventListener("click", () => {
+    toggleInputSign(ui.templateEditCal);
   });
 
-  ui.itemTypeCalSignBtn.addEventListener("click", () => {
-    toggleInputSign(ui.itemTypeCal);
+  ui.templateCalSignBtn.addEventListener("click", () => {
+    toggleInputSign(ui.templateCal);
   });
 
   ui.calItemCalSignBtn.addEventListener("click", () => {
@@ -576,9 +581,9 @@ function renderVersionInfo() {
   }
 }
 
-async function reloadItemTypesAndRefresh() {
-  state.itemTypes = await listItemTypes();
-  syncItemTypeSelects();
+async function reloadTemplatesAndRefresh() {
+  state.templates = await listTemplates();
+  syncTemplateSelects();
   await refreshCalView();
   await refreshWeightView();
   await refreshDataView();
@@ -615,17 +620,17 @@ async function performDeepRefresh() {
   window.location.replace(bustedUrl.toString());
 }
 
-function syncItemTypeSelects() {
-  const datalistOptions = state.itemTypes
-    .map((itemType) => `<option value="${escapeHtml(itemType.name)}"></option>`)
+function syncTemplateSelects() {
+  const datalistOptions = state.templates
+    .map((template) => `<option value="${escapeHtml(template.name)}"></option>`)
     .join("");
 
-  ui.calItemTypeList.innerHTML = datalistOptions;
+  ui.calTemplateList.innerHTML = datalistOptions;
 }
 
 async function refreshCalView() {
   const entries = await listAll(STORE_CAL_ENTRIES);
-  const itemTypeMap = indexById(state.itemTypes);
+  const templateMap = indexById(state.templates);
   const today = todayString();
   const yesterday = offsetDateString(today, -1);
   const dailyTarget = await readSettingNumber(SETTING_DAILY_CALORIE_TARGET, DEFAULT_DAILY_CALORIE_TARGET);
@@ -651,12 +656,12 @@ async function refreshCalView() {
   let renderedRows = 0;
 
   for (const entry of sortedEntries) {
-    const itemType = itemTypeMap[entry.itemTypeId];
-    if (!itemType) {
+    const template = templateMap[entry.templateId];
+    if (!template) {
       continue;
     }
 
-    const lineTotal = getEntryCalPerItem(entry, itemType) * entry.quantity;
+    const lineTotal = getEntryCalPerItem(entry, template) * entry.quantity;
     if (entry.date === today) {
       total += lineTotal;
     }
@@ -669,7 +674,7 @@ async function refreshCalView() {
       ui.calEntryList.appendChild(headerNode);
     }
 
-    const displayName = entry.customName || itemType.name;
+    const displayName = entry.customName || template.name;
     const createdTime = entry.createdAt || "--:--";
 
     const itemNode = document.createElement("li");
@@ -690,7 +695,7 @@ async function refreshCalView() {
     nameNode.className = "cal-col cal-col-name";
     const colorDot = document.createElement("span");
     colorDot.className = "entry-color-dot";
-    colorDot.style.backgroundColor = getEntryColor(entry, itemType);
+    colorDot.style.backgroundColor = getEntryColor(entry, template);
     const nameText = document.createElement("span");
     nameText.textContent = displayName;
     nameNode.appendChild(colorDot);
@@ -716,8 +721,8 @@ async function refreshCalView() {
         quantity: entry.quantity,
         date: todayString(),
         time: currentTimeString(),
-        calPerItem: getEntryCalPerItem(entry, itemType),
-        color: getEntryColor(entry, itemType),
+        calPerItem: getEntryCalPerItem(entry, template),
+        color: getEntryColor(entry, template),
       });
     });
 
@@ -885,13 +890,13 @@ function drawWeightChart(records, targetWeight) {
 }
 
 async function refreshDataView() {
-  ui.itemTypeList.innerHTML = "";
-  const query = String(ui.itemTypeSearch.value || "").trim().toLowerCase();
-  const filteredItemTypes = query
-    ? state.itemTypes.filter((itemType) => String(itemType.name || "").toLowerCase().includes(query))
-    : state.itemTypes;
+  ui.templateList.innerHTML = "";
+  const query = String(ui.templateSearch.value || "").trim().toLowerCase();
+  const filteredTemplates = query
+    ? state.templates.filter((template) => String(template.name || "").toLowerCase().includes(query))
+    : state.templates;
 
-  const sortedItemTypes = [...filteredItemTypes].sort((left, right) => {
+  const sortedTemplates = [...filteredTemplates].sort((left, right) => {
     const leftIsSeed = left.isSeed ? 1 : 0;
     const rightIsSeed = right.isSeed ? 1 : 0;
     if (leftIsSeed !== rightIsSeed) {
@@ -900,7 +905,7 @@ async function refreshDataView() {
     return String(left.name || "").localeCompare(String(right.name || ""));
   });
 
-  for (const itemType of sortedItemTypes) {
+  for (const template of sortedTemplates) {
     const node = document.createElement("li");
     node.className = "list-item cal-entry-row";
 
@@ -908,36 +913,36 @@ async function refreshDataView() {
     label.className = "cal-entry-label";
     const colorDot = document.createElement("span");
     colorDot.className = "entry-color-dot";
-    colorDot.style.backgroundColor = getItemTypeColor(itemType);
+    colorDot.style.backgroundColor = getTemplateColor(template);
     const labelText = document.createElement("span");
-    labelText.textContent = `${itemType.name} (${formatCal(itemType.calPerUnit)} kcal)`;
+    labelText.textContent = `${template.name} (${formatCal(template.calPerUnit)} kcal)`;
     label.appendChild(colorDot);
     label.appendChild(labelText);
 
     const editButton = document.createElement("button");
     editButton.type = "button";
     editButton.className = "icon-edit-button";
-    editButton.title = "Edit item type";
-    editButton.setAttribute("aria-label", "Edit item type");
+    editButton.title = "Edit template";
+    editButton.setAttribute("aria-label", "Edit template");
     editButton.textContent = "✎";
-    editButton.addEventListener("click", () => openItemTypeModal(itemType));
+    editButton.addEventListener("click", () => openTemplateModal(template));
 
     node.appendChild(label);
     node.appendChild(editButton);
 
-    ui.itemTypeList.appendChild(node);
+    ui.templateList.appendChild(node);
   }
 
-  if (sortedItemTypes.length === 0) {
+  if (sortedTemplates.length === 0) {
     const emptyNode = document.createElement("li");
     emptyNode.className = "list-item";
-    emptyNode.textContent = "No item types match your search.";
-    ui.itemTypeList.appendChild(emptyNode);
+    emptyNode.textContent = "No templates match your search.";
+    ui.templateList.appendChild(emptyNode);
   }
 }
 
 async function saveCalEntryFromModal() {
-  const typeName = ui.calItemTypeText.value.trim();
+  const typeName = ui.calTemplateText.value.trim();
   if (!typeName) {
     throw new Error("Type is required.");
   }
@@ -961,14 +966,14 @@ async function saveCalEntryFromModal() {
 
   const roundedCalories = roundTo(caloriesPerItem, 3);
   const selectedColor = getSelectedColor(ui.calColorPickerRow);
-  let selectedItemType = findItemTypeByName(typeName);
-  if (!selectedItemType) {
-    const createdId = await addRecord(STORE_ITEM_TYPES, {
+  let selectedTemplate = findTemplateByName(typeName);
+  if (!selectedTemplate) {
+    const createdId = await addRecord(STORE_TEMPLATES, {
       name: typeName,
       calPerUnit: roundedCalories,
       color: selectedColor,
     });
-    selectedItemType = {
+    selectedTemplate = {
       id: createdId,
       name: typeName,
       calPerUnit: roundedCalories,
@@ -987,7 +992,7 @@ async function saveCalEntryFromModal() {
       ...existingEntry,
       id: editingEntryId,
       date: selectedDate,
-      itemTypeId: selectedItemType.id,
+      templateId: selectedTemplate.id,
       quantity,
       createdAt: selectedTime,
       calPerItem: roundedCalories,
@@ -999,7 +1004,7 @@ async function saveCalEntryFromModal() {
 
   await addRecord(STORE_CAL_ENTRIES, {
     date: selectedDate,
-    itemTypeId: selectedItemType.id,
+    templateId: selectedTemplate.id,
     quantity,
     customName: typeName,
     createdAt: selectedTime,
@@ -1022,40 +1027,40 @@ function openCalEntryModalForCreate(prefill = null) {
   const nextQuantity = Number.isInteger(prefill?.quantity) && prefill.quantity > 0 ? prefill.quantity : 1;
   ui.calEntryDate.value = nextDate;
   ui.calEntryTime.value = nextTime;
-  ui.calItemTypeText.value = nextTypeName;
+  ui.calTemplateText.value = nextTypeName;
   ui.calQuantity.value = String(nextQuantity);
   ui.calItemCal.value = Number.isFinite(prefill?.calPerItem) ? String(prefill.calPerItem) : "";
-  const prefillType = nextTypeName ? findItemTypeByName(nextTypeName) : null;
+  const prefillType = nextTypeName ? findTemplateByName(nextTypeName) : null;
   const prefillColor = prefill && prefill.color ? String(prefill.color) : "";
-  if (ITEM_TYPE_COLOR_PALETTE.includes(prefillColor)) {
+  if (TEMPLATE_COLOR_PALETTE.includes(prefillColor)) {
     state.calColorManuallySet = true;
     setSelectedColor(ui.calColorPickerRow, prefillColor);
   } else {
-    setSelectedColor(ui.calColorPickerRow, prefillType ? getItemTypeColor(prefillType) : DEFAULT_ITEM_TYPE_COLOR);
+    setSelectedColor(ui.calColorPickerRow, prefillType ? getTemplateColor(prefillType) : DEFAULT_TEMPLATE_COLOR);
   }
   void syncCalModalTypeFields({ autoSuggestQuantity: true, preserveManualCalories: true });
   refreshCalModalComputedFields();
   ui.calEntryModal.classList.remove("hidden");
   updateBodyModalState();
-  ui.calItemTypeText.focus();
+  ui.calTemplateText.focus();
 }
 
 function openCalEntryModalForEdit(entry) {
-  const itemType = state.itemTypes.find((candidate) => candidate.id === entry.itemTypeId);
+  const template = state.templates.find((candidate) => candidate.id === entry.templateId);
   ui.calEntryId.value = String(entry.id);
-  ui.calItemTypeText.value = entry.customName || (itemType ? itemType.name : "");
+  ui.calTemplateText.value = entry.customName || (template ? template.name : "");
   ui.calQuantity.value = String(entry.quantity);
   ui.calEntryDate.value = entry.date || state.selectedDate || todayString();
   ui.calEntryTime.value = normalizeTimeString(entry.createdAt) || currentTimeString();
-  ui.calItemCal.value = String(getEntryCalPerItem(entry, itemType));
+  ui.calItemCal.value = String(getEntryCalPerItem(entry, template));
   ui.calEntrySubmitBtn.textContent = "Save";
   resetDeleteButton(ui.calEntryDeleteBtn);
   state.calColorManuallySet = true;
-  setSelectedColor(ui.calColorPickerRow, getEntryColor(entry, itemType));
+  setSelectedColor(ui.calColorPickerRow, getEntryColor(entry, template));
   refreshCalModalComputedFields();
   ui.calEntryModal.classList.remove("hidden");
   updateBodyModalState();
-  ui.calItemTypeText.focus();
+  ui.calTemplateText.focus();
 }
 
 function closeCalEntryModal() {
@@ -1069,23 +1074,23 @@ function closeCalEntryModal() {
   updateBodyModalState();
 }
 
-function openItemTypeModal(itemType) {
-  ui.itemTypeEditForm.reset();
-  ui.itemTypeEditId.value = String(itemType.id);
-  ui.itemTypeEditName.value = itemType.name;
-  ui.itemTypeEditCal.value = String(itemType.calPerUnit);
-  setSelectedColor(ui.itemTypeEditColorPickerRow, getItemTypeColor(itemType));
-  resetDeleteButton(ui.itemTypeEditDeleteBtn);
-  ui.itemTypeModal.classList.remove("hidden");
+function openTemplateModal(template) {
+  ui.templateEditForm.reset();
+  ui.templateEditId.value = String(template.id);
+  ui.templateEditName.value = template.name;
+  ui.templateEditCal.value = String(template.calPerUnit);
+  setSelectedColor(ui.templateEditColorPickerRow, getTemplateColor(template));
+  resetDeleteButton(ui.templateEditDeleteBtn);
+  ui.templateModal.classList.remove("hidden");
   updateBodyModalState();
-  ui.itemTypeEditName.focus();
+  ui.templateEditName.focus();
 }
 
-function closeItemTypeModal() {
-  ui.itemTypeEditForm.reset();
-  ui.itemTypeEditId.value = "";
-  resetDeleteButton(ui.itemTypeEditDeleteBtn);
-  ui.itemTypeModal.classList.add("hidden");
+function closeTemplateModal() {
+  ui.templateEditForm.reset();
+  ui.templateEditId.value = "";
+  resetDeleteButton(ui.templateEditDeleteBtn);
+  ui.templateModal.classList.add("hidden");
   updateBodyModalState();
 }
 
@@ -1112,7 +1117,7 @@ function closeProgressEditModal() {
 function updateBodyModalState() {
   const hasVisibleModal =
     !ui.calEntryModal.classList.contains("hidden") ||
-    !ui.itemTypeModal.classList.contains("hidden") ||
+    !ui.templateModal.classList.contains("hidden") ||
     !ui.progressEditModal.classList.contains("hidden");
   document.body.classList.toggle("modal-open", hasVisibleModal);
 }
@@ -1143,35 +1148,35 @@ function resetDeleteButton(button) {
   }
 }
 
-function findItemTypeByName(name) {
+function findTemplateByName(name) {
   const normalized = String(name || "").trim().toLowerCase();
-  return state.itemTypes.find((itemType) => itemType.name.trim().toLowerCase() === normalized) || null;
+  return state.templates.find((template) => template.name.trim().toLowerCase() === normalized) || null;
 }
 
-function getItemTypeColor(itemType) {
-  const color = itemType && itemType.color ? String(itemType.color) : "";
-  return ITEM_TYPE_COLOR_PALETTE.includes(color) ? color : DEFAULT_ITEM_TYPE_COLOR;
+function getTemplateColor(template) {
+  const color = template && template.color ? String(template.color) : "";
+  return TEMPLATE_COLOR_PALETTE.includes(color) ? color : DEFAULT_TEMPLATE_COLOR;
 }
 
-function getEntryCalPerItem(entry, itemType) {
+function getEntryCalPerItem(entry, template) {
   const override = Number(entry?.calPerItem);
   if (Number.isFinite(override)) {
     return override;
   }
-  return Number(itemType?.calPerUnit) || 0;
+  return Number(template?.calPerUnit) || 0;
 }
 
-function getEntryColor(entry, itemType) {
+function getEntryColor(entry, template) {
   const override = entry && entry.color ? String(entry.color) : "";
-  if (ITEM_TYPE_COLOR_PALETTE.includes(override)) {
+  if (TEMPLATE_COLOR_PALETTE.includes(override)) {
     return override;
   }
-  return getItemTypeColor(itemType);
+  return getTemplateColor(template);
 }
 
 function buildColorSwatches(rowElement) {
   rowElement.innerHTML = "";
-  ITEM_TYPE_COLOR_PALETTE.forEach((color) => {
+  TEMPLATE_COLOR_PALETTE.forEach((color) => {
     const swatch = document.createElement("button");
     swatch.type = "button";
     swatch.className = "color-swatch";
@@ -1189,7 +1194,7 @@ function buildColorSwatches(rowElement) {
 }
 
 function setSelectedColor(rowElement, color) {
-  const safeColor = ITEM_TYPE_COLOR_PALETTE.includes(color) ? color : DEFAULT_ITEM_TYPE_COLOR;
+  const safeColor = TEMPLATE_COLOR_PALETTE.includes(color) ? color : DEFAULT_TEMPLATE_COLOR;
   rowElement.querySelectorAll(".color-swatch").forEach((swatch) => {
     swatch.classList.toggle("selected", swatch.dataset.color === safeColor);
   });
@@ -1197,23 +1202,23 @@ function setSelectedColor(rowElement, color) {
 
 function getSelectedColor(rowElement) {
   const selected = rowElement.querySelector(".color-swatch.selected");
-  return selected ? selected.dataset.color : DEFAULT_ITEM_TYPE_COLOR;
+  return selected ? selected.dataset.color : DEFAULT_TEMPLATE_COLOR;
 }
 
 async function populateSuggestedQuantityForTypeName(typeName) {
-  const itemType = findItemTypeByName(typeName);
-  if (!itemType) {
+  const template = findTemplateByName(typeName);
+  if (!template) {
     return;
   }
 
-  const suggested = await getLastQuantityForItemType(itemType.id);
+  const suggested = await getLastQuantityForTemplate(template.id);
   ui.calQuantity.value = String(suggested);
 }
 
 async function syncCalModalTypeFields(options = {}) {
   const { autoSuggestQuantity = false, preserveManualCalories = false } = options;
-  const enteredName = ui.calItemTypeText.value.trim();
-  const knownType = findItemTypeByName(enteredName);
+  const enteredName = ui.calTemplateText.value.trim();
+  const knownType = findTemplateByName(enteredName);
 
   if (knownType) {
     if (!preserveManualCalories) {
@@ -1221,11 +1226,11 @@ async function syncCalModalTypeFields(options = {}) {
     }
 
     if (!state.calColorManuallySet) {
-      setSelectedColor(ui.calColorPickerRow, getItemTypeColor(knownType));
+      setSelectedColor(ui.calColorPickerRow, getTemplateColor(knownType));
     }
 
     if (autoSuggestQuantity && !ui.calEntryId.value) {
-      const suggested = await getLastQuantityForItemType(knownType.id);
+      const suggested = await getLastQuantityForTemplate(knownType.id);
       const quantityValue = Number(ui.calQuantity.value);
       if (!Number.isInteger(quantityValue) || quantityValue < 1) {
         ui.calQuantity.value = String(suggested);
@@ -1239,7 +1244,7 @@ async function syncCalModalTypeFields(options = {}) {
 }
 
 function refreshCalModalComputedFields() {
-  const typeName = String(ui.calItemTypeText.value || "").trim();
+  const typeName = String(ui.calTemplateText.value || "").trim();
   const quantity = Number(ui.calQuantity.value);
   const caloriesRaw = String(ui.calItemCal.value || "").trim();
   const caloriesPerItem = Number(caloriesRaw);
@@ -1296,10 +1301,10 @@ function parseCaloryPerItemInput(rawValue) {
   return value;
 }
 
-async function getLastQuantityForItemType(itemTypeId) {
+async function getLastQuantityForTemplate(templateId) {
   const entries = await listAll(STORE_CAL_ENTRIES);
   const matched = entries
-    .filter((entry) => entry.itemTypeId === itemTypeId && Number.isInteger(entry.quantity) && entry.quantity > 0)
+    .filter((entry) => entry.templateId === templateId && Number.isInteger(entry.quantity) && entry.quantity > 0)
     .sort((left, right) => right.id - left.id);
 
   if (matched.length === 0) {
@@ -1309,7 +1314,7 @@ async function getLastQuantityForItemType(itemTypeId) {
   return matched[0].quantity;
 }
 
-async function createItemType(nameInput, calInput) {
+async function createTemplate(nameInput, calInput) {
   const name = String(nameInput || "").trim();
   const calories = Number(calInput);
 
@@ -1321,10 +1326,10 @@ async function createItemType(nameInput, calInput) {
     throw new Error("Calories must be numeric.");
   }
 
-  return addRecord(STORE_ITEM_TYPES, {
+  return addRecord(STORE_TEMPLATES, {
     name,
     calPerUnit: roundTo(calories, 3),
-    color: DEFAULT_ITEM_TYPE_COLOR,
+    color: DEFAULT_TEMPLATE_COLOR,
   });
 }
 
@@ -1343,8 +1348,8 @@ function openDatabase() {
     request.onupgradeneeded = (event) => {
       const database = event.target.result;
 
-      if (!database.objectStoreNames.contains(STORE_ITEM_TYPES)) {
-        database.createObjectStore(STORE_ITEM_TYPES, {
+      if (!database.objectStoreNames.contains(STORE_TEMPLATES)) {
+        database.createObjectStore(STORE_TEMPLATES, {
           keyPath: "id",
           autoIncrement: true,
         });
@@ -1518,8 +1523,8 @@ function listAll(storeName) {
   });
 }
 
-async function listItemTypes() {
-  const items = await listAll(STORE_ITEM_TYPES);
+async function listTemplates() {
+  const items = await listAll(STORE_TEMPLATES);
   return items.sort((left, right) => left.name.localeCompare(right.name));
 }
 
@@ -1533,13 +1538,13 @@ function listCalEntriesByDate(date) {
   });
 }
 
-async function countCalEntriesForItemType(itemTypeId) {
+async function countCalEntriesForTemplate(templateId) {
   const entries = await listAll(STORE_CAL_ENTRIES);
-  return entries.filter((entry) => entry.itemTypeId === itemTypeId).length;
+  return entries.filter((entry) => entry.templateId === templateId).length;
 }
 
 async function ensureSeedData() {
-  const existingItems = await listAll(STORE_ITEM_TYPES);
+  const existingItems = await listAll(STORE_TEMPLATES);
   const existingNames = new Set(existingItems.map((item) => String(item.name || "").trim().toLowerCase()));
 
   const fallbackSeeds = [
@@ -1563,7 +1568,7 @@ async function ensureSeedData() {
       continue;
     }
 
-    await addRecord(STORE_ITEM_TYPES, {
+    await addRecord(STORE_TEMPLATES, {
       name,
       calPerUnit: roundTo(calories, 3),
       isSeed: true,
@@ -1572,7 +1577,7 @@ async function ensureSeedData() {
   }
 }
 
-async function migrateFlagExistingSeedItemTypes() {
+async function migrateFlagExistingSeedTemplates() {
   const fallbackSeeds = [
     { name: "1g Banana", calPerUnit: 0.89 },
     { name: "1g Yogurt, plain", calPerUnit: 0.61 },
@@ -1582,7 +1587,7 @@ async function migrateFlagExistingSeedItemTypes() {
   const seeds = jsonSeed.length > 0 ? jsonSeed : fallbackSeeds;
   const seedNames = new Set(seeds.map((seed) => String(seed?.name || "").trim().toLowerCase()));
 
-  const existingItems = await listAll(STORE_ITEM_TYPES);
+  const existingItems = await listAll(STORE_TEMPLATES);
   for (const item of existingItems) {
     if (item.isSeed) {
       continue;
@@ -1591,24 +1596,24 @@ async function migrateFlagExistingSeedItemTypes() {
     if (!seedNames.has(normalized)) {
       continue;
     }
-    await updateRecord(STORE_ITEM_TYPES, {
+    await updateRecord(STORE_TEMPLATES, {
       ...item,
       isSeed: true,
     });
   }
 }
 
-async function migrateLegacy100gItemTypes() {
-  const itemTypes = await listAll(STORE_ITEM_TYPES);
-  if (itemTypes.length === 0) {
+async function migrateLegacy100gTemplates() {
+  const templates = await listAll(STORE_TEMPLATES);
+  if (templates.length === 0) {
     return;
   }
 
   const normalizedIdByName = new Map(
-    itemTypes.map((itemType) => [String(itemType.name || "").trim().toLowerCase(), itemType.id])
+    templates.map((template) => [String(template.name || "").trim().toLowerCase(), template.id])
   );
 
-  const legacyTypes = itemTypes.filter((itemType) => String(itemType.name || "").trim().toLowerCase().startsWith("100g "));
+  const legacyTypes = templates.filter((template) => String(template.name || "").trim().toLowerCase().startsWith("100g "));
   if (legacyTypes.length === 0) {
     return;
   }
@@ -1627,29 +1632,29 @@ async function migrateLegacy100gItemTypes() {
 
     let targetTypeId = normalizedIdByName.get(normalizedNextName);
     if (!targetTypeId) {
-      targetTypeId = await addRecord(STORE_ITEM_TYPES, {
+      targetTypeId = await addRecord(STORE_TEMPLATES, {
         name: nextName,
         calPerUnit: roundTo(Number(legacyType.calPerUnit) / 100, 3),
       });
       normalizedIdByName.set(normalizedNextName, targetTypeId);
     }
 
-    const impactedEntries = allEntries.filter((entry) => entry.itemTypeId === legacyType.id);
+    const impactedEntries = allEntries.filter((entry) => entry.templateId === legacyType.id);
     for (const entry of impactedEntries) {
       await updateRecord(STORE_CAL_ENTRIES, {
         ...entry,
-        itemTypeId: targetTypeId,
+        templateId: targetTypeId,
         quantity: Number(entry.quantity) * 100,
       });
     }
 
-    await deleteRecord(STORE_ITEM_TYPES, legacyType.id);
+    await deleteRecord(STORE_TEMPLATES, legacyType.id);
   }
 }
 
-async function simplifyAndPruneItemTypes() {
-  const itemTypes = await listAll(STORE_ITEM_TYPES);
-  if (itemTypes.length === 0) {
+async function simplifyAndPruneTemplates() {
+  const templates = await listAll(STORE_TEMPLATES);
+  if (templates.length === 0) {
     return;
   }
 
@@ -1660,34 +1665,34 @@ async function simplifyAndPruneItemTypes() {
   const idsToDelete = new Set();
   const idsToRename = new Map();
 
-  for (const itemType of itemTypes.sort((left, right) => left.id - right.id)) {
-    const rawName = String(itemType.name || "").trim();
+  for (const template of templates.sort((left, right) => left.id - right.id)) {
+    const rawName = String(template.name || "").trim();
     const normalizedRawName = normalizeNameKey(rawName);
-    const calories = Number(itemType.calPerUnit);
+    const calories = Number(template.calPerUnit);
     const isLegacyBadYogurt = normalizedRawName === "1g yogurt" && Math.abs(calories - 10) < 0.001;
 
     if (deletionNameSet.has(normalizedRawName) || isLegacyBadYogurt) {
-      targetBySourceId.set(itemType.id, null);
-      idsToDelete.add(itemType.id);
+      targetBySourceId.set(template.id, null);
+      idsToDelete.add(template.id);
       continue;
     }
 
-    const simplifiedName = simplifyItemTypeName(rawName);
+    const simplifiedName = simplifyTemplateName(rawName);
     const simplifiedKey = normalizeNameKey(simplifiedName);
     const existingKeeper = keepersByName.get(simplifiedKey);
 
     if (!existingKeeper) {
-      keepersByName.set(simplifiedKey, itemType.id);
-      targetBySourceId.set(itemType.id, itemType.id);
-      caloriesByKeeperId.set(itemType.id, [Number.isFinite(calories) ? calories : 0]);
+      keepersByName.set(simplifiedKey, template.id);
+      targetBySourceId.set(template.id, template.id);
+      caloriesByKeeperId.set(template.id, [Number.isFinite(calories) ? calories : 0]);
       if (simplifiedName !== rawName) {
-        idsToRename.set(itemType.id, simplifiedName);
+        idsToRename.set(template.id, simplifiedName);
       }
       continue;
     }
 
-    targetBySourceId.set(itemType.id, existingKeeper);
-    idsToDelete.add(itemType.id);
+    targetBySourceId.set(template.id, existingKeeper);
+    idsToDelete.add(template.id);
     if (!caloriesByKeeperId.has(existingKeeper)) {
       caloriesByKeeperId.set(existingKeeper, []);
     }
@@ -1696,46 +1701,46 @@ async function simplifyAndPruneItemTypes() {
 
   const allEntries = await listAll(STORE_CAL_ENTRIES);
   for (const entry of allEntries) {
-    if (!targetBySourceId.has(entry.itemTypeId)) {
+    if (!targetBySourceId.has(entry.templateId)) {
       continue;
     }
 
-    const targetId = targetBySourceId.get(entry.itemTypeId);
+    const targetId = targetBySourceId.get(entry.templateId);
     if (targetId === null) {
       await deleteRecord(STORE_CAL_ENTRIES, entry.id);
       continue;
     }
 
-    if (targetId !== entry.itemTypeId) {
+    if (targetId !== entry.templateId) {
       await updateRecord(STORE_CAL_ENTRIES, {
         ...entry,
-        itemTypeId: targetId,
+        templateId: targetId,
       });
     }
   }
 
-  for (const itemType of itemTypes) {
-    if (idsToDelete.has(itemType.id)) {
+  for (const template of templates) {
+    if (idsToDelete.has(template.id)) {
       continue;
     }
 
-    const renamed = idsToRename.get(itemType.id) || String(itemType.name || "").trim();
-    const cals = caloriesByKeeperId.get(itemType.id) || [Number(itemType.calPerUnit) || 0];
-    const avgCalories = cals.length > 0 ? cals.reduce((sum, value) => sum + value, 0) / cals.length : Number(itemType.calPerUnit) || 0;
+    const renamed = idsToRename.get(template.id) || String(template.name || "").trim();
+    const cals = caloriesByKeeperId.get(template.id) || [Number(template.calPerUnit) || 0];
+    const avgCalories = cals.length > 0 ? cals.reduce((sum, value) => sum + value, 0) / cals.length : Number(template.calPerUnit) || 0;
 
-    await updateRecord(STORE_ITEM_TYPES, {
-      ...itemType,
+    await updateRecord(STORE_TEMPLATES, {
+      ...template,
       name: renamed,
       calPerUnit: roundTo(avgCalories, 3),
     });
   }
 
   for (const typeId of idsToDelete) {
-    await deleteRecord(STORE_ITEM_TYPES, typeId);
+    await deleteRecord(STORE_TEMPLATES, typeId);
   }
 }
 
-function simplifyItemTypeName(rawName) {
+function simplifyTemplateName(rawName) {
   const name = String(rawName || "").trim();
   const lower = name.toLowerCase();
 

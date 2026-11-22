@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Banana Tracker</title>
   <link rel="icon" type="image/png" sizes="16x16" href="banana_icon_16.png" />
-  <link rel="stylesheet" href="styles.css?v=20261122l" />
+  <link rel="stylesheet" href="styles.css?v=20261122m" />
 </head>
 <body>
   <div class="app-shell">
@@ -72,25 +72,25 @@
         </div>
 
         <div class="card">
-          <h2>Create Item Type</h2>
-          <form id="item-type-form">
-            <label for="item-type-name">Name</label>
-            <input id="item-type-name" type="text" maxlength="80" autocomplete="off" required="required" />
+          <h2>Create Template</h2>
+          <form id="template-form">
+            <label for="template-name">Name</label>
+            <input id="template-name" type="text" maxlength="80" autocomplete="off" required="required" />
 
-            <label for="item-type-cal">Calories per unit</label>
+            <label for="template-cal">Calories per unit</label>
             <div class="type-row">
-              <input id="item-type-cal" type="text" inputmode="decimal" pattern="-?[0-9]*\.?[0-9]*" required="required" />
-              <button id="item-type-cal-sign-btn" type="button" class="qty-adjust-button" aria-label="Toggle positive/negative">±</button>
+              <input id="template-cal" type="text" inputmode="decimal" pattern="-?[0-9]*\.?[0-9]*" required="required" />
+              <button id="template-cal-sign-btn" type="button" class="qty-adjust-button" aria-label="Toggle positive/negative">±</button>
             </div>
 
-            <button type="submit">Create item type</button>
+            <button type="submit">Create template</button>
           </form>
         </div>
 
         <div class="card">
-          <h2>Item Types</h2>
-          <input id="item-type-search" type="text" placeholder="Search item types" autocomplete="off" />
-          <ul id="item-type-list" class="list"></ul>
+          <h2>Templates</h2>
+          <input id="template-search" type="text" placeholder="Search templates" autocomplete="off" />
+          <ul id="template-list" class="list"></ul>
         </div>
       </section>
     </main>
@@ -111,8 +111,8 @@
         <input id="cal-entry-id" type="hidden" />
 
         <div class="type-row one-column">
-          <input id="cal-item-type-text" type="text" maxlength="80" autocomplete="off" list="cal-item-type-list" required="required" placeholder="Type" />
-          <datalist id="cal-item-type-list"></datalist>
+          <input id="cal-template-text" type="text" maxlength="80" autocomplete="off" list="cal-template-list" required="required" placeholder="Type" />
+          <datalist id="cal-template-list"></datalist>
         </div>
 
         <div class="type-row">
@@ -145,30 +145,30 @@
     </div>
   </div>
 
-  <div id="item-type-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Item type edit form">
-    <div class="modal-backdrop" id="item-type-modal-backdrop"></div>
+  <div id="template-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Template edit form">
+    <div class="modal-backdrop" id="template-modal-backdrop"></div>
     <div class="modal-panel">
-      <form id="item-type-edit-form">
-        <input id="item-type-edit-id" type="hidden" />
+      <form id="template-edit-form">
+        <input id="template-edit-id" type="hidden" />
 
         <div class="type-row one-column">
-          <input id="item-type-edit-name" type="text" maxlength="80" autocomplete="off" required="required" placeholder="Name" />
+          <input id="template-edit-name" type="text" maxlength="80" autocomplete="off" required="required" placeholder="Name" />
         </div>
 
         <div class="quantity-row five-columns">
           <span class="quantity-label">Quantity</span>
-          <input id="item-type-edit-cal" type="text" inputmode="decimal" pattern="-?[0-9]*\.?[0-9]*" required="required" />
-          <button id="item-type-cal-plus-btn" type="button" class="qty-adjust-button" aria-label="Increase quantity">+</button>
-          <button id="item-type-cal-minus-btn" type="button" class="qty-adjust-button" aria-label="Decrease quantity">-</button>
-          <button id="item-type-edit-cal-sign-btn" type="button" class="qty-adjust-button" aria-label="Toggle positive/negative">±</button>
+          <input id="template-edit-cal" type="text" inputmode="decimal" pattern="-?[0-9]*\.?[0-9]*" required="required" />
+          <button id="template-cal-plus-btn" type="button" class="qty-adjust-button" aria-label="Increase quantity">+</button>
+          <button id="template-cal-minus-btn" type="button" class="qty-adjust-button" aria-label="Decrease quantity">-</button>
+          <button id="template-edit-cal-sign-btn" type="button" class="qty-adjust-button" aria-label="Toggle positive/negative">±</button>
         </div>
 
-        <div class="color-picker-row" id="item-type-edit-color-picker-row" role="group" aria-label="Item color"></div>
+        <div class="color-picker-row" id="template-edit-color-picker-row" role="group" aria-label="Item color"></div>
 
         <div class="row-actions three-columns">
-          <button id="item-type-edit-save-btn" type="submit">Save</button>
-          <button id="item-type-edit-cancel-btn" type="button">Cancel</button>
-          <button id="item-type-edit-delete-btn" type="button" class="icon-delete-button" aria-label="Delete item type" title="Delete item type">Delete</button>
+          <button id="template-edit-save-btn" type="submit">Save</button>
+          <button id="template-edit-cancel-btn" type="button">Cancel</button>
+          <button id="template-edit-delete-btn" type="button" class="icon-delete-button" aria-label="Delete template" title="Delete template">Delete</button>
         </div>
       </form>
     </div>
@@ -205,6 +205,6 @@
   </div>
 
   <script src="food_seed_data.js" type="application/javascript"></script>
-  <script src="app.js?v=20261122n" type="application/javascript"></script>
+  <script src="app.js?v=20261122o" type="application/javascript"></script>
 </body>
 </html>

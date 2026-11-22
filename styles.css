@@ -402,19 +402,19 @@ button.danger {
   text-overflow: ellipsis;
 }
 
-#item-type-list {
+#template-list {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
 
-#item-type-list .list-item {
+#template-list .list-item {
   width: auto;
   max-width: 190px;
   padding: 0.45rem 0.55rem;
 }
 
-#item-type-list .cal-entry-label {
+#template-list .cal-entry-label {
   flex: 1 1 auto;
   min-width: 0;
   white-space: normal;
@@ -424,7 +424,7 @@ button.danger {
   line-height: 1.2;
 }
 
-#item-type-list .icon-edit-button {
+#template-list .icon-edit-button {
   flex-shrink: 0;
 }
 

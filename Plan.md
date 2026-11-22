@@ -18,7 +18,7 @@ No large tab title is shown inside each tab page.
 
 ## 3) Data model (implemented requirements)
 
-### `ItemType`
+### `Template`
 - `id`
 - `name`
 - `calPerUnit` (can be positive, negative, and decimal)
@@ -27,12 +27,12 @@ No large tab title is shown inside each tab page.
 ### `CalEntry`
 - `id`
 - `date` (`YYYY-MM-DD`)
-- `itemTypeId` (the type used to initialize this entry; used only to decide create-vs-reuse at save time and for suggestions, not as an authoritative back-reference — display always uses the entry's own snapshot fields below)
+- `itemTypeId` (the template used to initialize this entry; used only to decide create-vs-reuse at save time and for suggestions, not as an authoritative back-reference — display always uses the entry's own snapshot fields below)
 - `quantity`
 - `createdAt` (`HH:MM`, auto-set on creation)
-- `customName` (snapshot of the type name at creation/edit time; independent of the item type's current `name`)
-- `calPerItem` (snapshot of calories per item at creation/edit time; independent of the item type's current `calPerUnit`)
-- `color` (snapshot of the color at creation/edit time; independent of the item type's current `color`)
+- `customName` (snapshot of the template name at creation/edit time; independent of the template's current `name`)
+- `calPerItem` (snapshot of calories per item at creation/edit time; independent of the template's current `calPerUnit`)
+- `color` (snapshot of the color at creation/edit time; independent of the template's current `color`)
 
 ### `WeightEntry`
 - `date` (`YYYY-MM-DD`)
@@ -60,11 +60,11 @@ No large tab title is shown inside each tab page.
 	- Row 3 (below date/time, above actions): row of 10 small circular color swatches (fixed palette), one highlighted as selected.
 	- Row 4: `Add` and `Cancel` buttons.
 
-### Item type vs. per-entry calories/color (important)
-- Creating an entry with a **new** type name creates a new `ItemType`, initialized with the entered calories-per-item and selected color.
-- Creating an entry with an **existing** type name never creates or modifies that `ItemType`. The entered calories-per-item and selected color are stored only on the new `CalEntry` (as `calPerItem` / `color`), as a snapshot independent from the item type.
-- Editing an existing entry's calories or color only updates that entry's snapshot; it never changes the underlying `ItemType`, and never affects other entries (including copies) of the same type.
-- Copying an entry (⧉ button) carries over that entry's own snapshot values (not the item type's current values) to the new entry.
+### Template vs. per-entry calories/color (important)
+- Creating an entry with a **new** template name creates a new `Template`, initialized with the entered calories-per-item and selected color.
+- Creating an entry with an **existing** template name never creates or modifies that `Template`. The entered calories-per-item and selected color are stored only on the new `CalEntry` (as `calPerItem` / `color`), as a snapshot independent from the template.
+- Editing an existing entry's calories or color only updates that entry's snapshot; it never changes the underlying `Template`, and never affects other entries (including copies) of the same template.
+- Copying an entry (⧉ button) carries over that entry's own snapshot values (not the template's current values) to the new entry.
 
 ### Smart quantity default
 - When a type is selected/typed:
@@ -97,7 +97,7 @@ No weight unit label is shown.
 - When a new day record is created, store creation time (`HH:MM`).
 
 ## 6) `Data` tab requirements
-- Item type list uses same compact one-line style as `Cal`/`Progress`.
+- Template list uses same compact one-line style as `Cal`/`Progress`.
 - Each row has pen icon (`✎`) for edit.
 - Numeric validation for calories remains required.
 

@@ -5,9 +5,9 @@ Mobile-first local web app to track daily calories and body weight.
 ## Features
 - 3 tabs: `Cal`, `Progress`, `Data`
 - Local persistence with IndexedDB (`itemTypes`, `calEntries`, `weightEntries`)
-- Preloaded ~100 common food item types generated from USDA Foundation Foods JSON
+- Preloaded ~100 common food templates generated from USDA Foundation Foods JSON
 - Calorie entries per day with quantity and optional name override
-- Item type CRUD with positive/negative calories
+- Template CRUD with positive/negative calories
 - Weight capture + editable history + simple trend chart
 - No backend required
 
@@ -15,7 +15,7 @@ Mobile-first local web app to track daily calories and body weight.
 - `index.xhtml`: app markup and layout
 - `styles.css`: mobile-first styles
 - `app.js`: app logic and IndexedDB data layer
-- `food_seed_data.js`: generated seed item types (`name`, `calPerUnit`)
+- `food_seed_data.js`: generated seed templates (`name`, `calPerUnit`)
 - `tools/build_food_seed.py`: parses USDA JSON and regenerates `food_seed_data.js`
 - `tests/smoke_test.py`: minimal validation test
 
