@@ -339,7 +339,7 @@ button.danger {
 
 .cal-entry-columns {
   display: grid;
-  grid-template-columns: 64px 1fr 170px 90px 50px 50px;
+  grid-template-columns: 44px 1fr 170px 90px 30px 30px;
   align-items: center;
   gap: 0.45rem;
 }
@@ -391,6 +391,13 @@ button.danger {
 
 .cal-col-time {
   padding-right: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.cal-entry-columns .icon-edit-button {
+  width: 30px;
+  min-width: 30px;
 }
 
 .icon-edit-button {
@@ -561,7 +568,7 @@ body.modal-open {
 
 @media (max-width: 700px) {
   .cal-entry-columns {
-    grid-template-columns: 52px minmax(0, 1fr) 110px 72px 44px 44px;
+    grid-template-columns: 36px minmax(0, 1fr) 110px 72px 26px 26px;
     gap: 0.3rem;
   }
 
