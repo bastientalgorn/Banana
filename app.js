@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.15.1",
+    date: "2026-11-22",
+    summary: "Cal entry rows: calorie total column is 25% wider and sits closer to the time column.",
+  },
+  {
     version: "1.15.0",
     date: "2026-11-22",
     summary: "Maintenance: added a \"Clear all history\" button (requires 10 presses to confirm) that wipes calorie and weight entries; renamed the IndexedDB store to \"templates\" (no backward compatibility needed).",

@@ -437,7 +437,7 @@ button.danger {
 
 .cal-entry-columns {
   display: grid;
-  grid-template-columns: 44px 1fr 50px 90px 30px 30px;
+  grid-template-columns: 44px 1fr 50px 113px 30px 30px;
   align-items: center;
   gap: 0.45rem;
 }
@@ -489,6 +489,7 @@ button.danger {
 
 .cal-col-time {
   padding-right: 0.4rem;
+  margin-left: -0.3rem;
   font-size: 0.8rem;
   color: var(--muted);
 }
@@ -622,11 +623,12 @@ body.modal-open {
 
 @media (max-width: 700px) {
   .cal-entry-columns {
-    grid-template-columns: 36px minmax(0, 1fr) 40px 72px 26px 26px;
+    grid-template-columns: 36px minmax(0, 1fr) 40px 90px 26px 26px;
     gap: 0.3rem;
   }
 
   .cal-col-time {
     padding-right: 0;
+    margin-left: -0.2rem;
   }
 }
