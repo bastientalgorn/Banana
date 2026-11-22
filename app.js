@@ -113,6 +113,7 @@ const ui = {
   itemTypeEditCalSignBtn: document.getElementById("item-type-edit-cal-sign-btn"),
   itemTypeEditCancelBtn: document.getElementById("item-type-edit-cancel-btn"),
   itemTypeEditDeleteBtn: document.getElementById("item-type-edit-delete-btn"),
+  itemTypeEditColorPickerRow: document.getElementById("item-type-edit-color-picker-row"),
   deepRefreshBtn: document.getElementById("deep-refresh-btn"),
   deepRefreshStatus: document.getElementById("deep-refresh-status"),
   listTemplate: document.getElementById("simple-list-item-template"),
@@ -120,11 +121,13 @@ const ui = {
 
 document.addEventListener("DOMContentLoaded", async () => {
   bindUiEvents();
-  buildColorSwatches();
+  buildColorSwatches(ui.calColorPickerRow);
+  buildColorSwatches(ui.itemTypeEditColorPickerRow);
   state.db = await openDatabase();
   await ensureDefaultSettings();
   await migrateLegacy100gItemTypes();
   await ensureSeedData();
+  await migrateFlagExistingSeedItemTypes();
   await simplifyAndPruneItemTypes();
   state.itemTypes = await listItemTypes();
   ui.weightTodayDate.value = state.selectedDate;
@@ -437,10 +440,14 @@ function bindUiEvents() {
       return;
     }
 
+    const existingItemType = state.itemTypes.find((candidate) => candidate.id === id) || {};
+
     await updateRecord(STORE_ITEM_TYPES, {
+      ...existingItemType,
       id,
       name,
       calPerUnit: roundTo(calPerUnit, 3),
+      color: getSelectedColor(ui.itemTypeEditColorPickerRow),
     });
 
     closeItemTypeModal();
@@ -885,7 +892,7 @@ async function saveCalEntryFromModal() {
   const caloriesPerItem = parseCaloryPerItemInput(ui.calItemCal.value);
 
   const roundedCalories = roundTo(caloriesPerItem, 3);
-  const selectedColor = getSelectedColor();
+  const selectedColor = getSelectedColor(ui.calColorPickerRow);
   let selectedItemType = findItemTypeByName(typeName);
   if (!selectedItemType) {
     const createdId = await addRecord(STORE_ITEM_TYPES, {
@@ -960,7 +967,7 @@ function openCalEntryModalForCreate(prefill = null) {
   ui.calQuantity.value = String(nextQuantity);
   ui.calItemCal.value = Number.isFinite(prefill?.calPerItem) ? String(prefill.calPerItem) : "";
   const prefillType = nextTypeName ? findItemTypeByName(nextTypeName) : null;
-  setSelectedColor(prefillType ? getItemTypeColor(prefillType) : DEFAULT_ITEM_TYPE_COLOR);
+  setSelectedColor(ui.calColorPickerRow, prefillType ? getItemTypeColor(prefillType) : DEFAULT_ITEM_TYPE_COLOR);
   void syncCalModalTypeFields({ autoSuggestQuantity: true, preserveManualCalories: true });
   refreshCalModalComputedFields();
   ui.calEntryModal.classList.remove("hidden");
@@ -979,7 +986,7 @@ function openCalEntryModalForEdit(entry) {
   ui.calEntrySubmitBtn.textContent = "Save";
   resetDeleteButton(ui.calEntryDeleteBtn);
   state.calColorManuallySet = false;
-  setSelectedColor(getItemTypeColor(itemType));
+  setSelectedColor(ui.calColorPickerRow, getItemTypeColor(itemType));
   refreshCalModalComputedFields();
   ui.calEntryModal.classList.remove("hidden");
   updateBodyModalState();
@@ -1002,6 +1009,7 @@ function openItemTypeModal(itemType) {
   ui.itemTypeEditId.value = String(itemType.id);
   ui.itemTypeEditName.value = itemType.name;
   ui.itemTypeEditCal.value = String(itemType.calPerUnit);
+  setSelectedColor(ui.itemTypeEditColorPickerRow, getItemTypeColor(itemType));
   resetDeleteButton(ui.itemTypeEditDeleteBtn);
   ui.itemTypeModal.classList.remove("hidden");
   updateBodyModalState();
@@ -1080,8 +1088,8 @@ function getItemTypeColor(itemType) {
   return ITEM_TYPE_COLOR_PALETTE.includes(color) ? color : DEFAULT_ITEM_TYPE_COLOR;
 }
 
-function buildColorSwatches() {
-  ui.calColorPickerRow.innerHTML = "";
+function buildColorSwatches(rowElement) {
+  rowElement.innerHTML = "";
   ITEM_TYPE_COLOR_PALETTE.forEach((color) => {
     const swatch = document.createElement("button");
     swatch.type = "button";
@@ -1090,22 +1098,24 @@ function buildColorSwatches() {
     swatch.dataset.color = color;
     swatch.setAttribute("aria-label", `Select color ${color}`);
     swatch.addEventListener("click", () => {
-      state.calColorManuallySet = true;
-      setSelectedColor(color);
+      if (rowElement === ui.calColorPickerRow) {
+        state.calColorManuallySet = true;
+      }
+      setSelectedColor(rowElement, color);
     });
-    ui.calColorPickerRow.appendChild(swatch);
+    rowElement.appendChild(swatch);
   });
 }
 
-function setSelectedColor(color) {
+function setSelectedColor(rowElement, color) {
   const safeColor = ITEM_TYPE_COLOR_PALETTE.includes(color) ? color : DEFAULT_ITEM_TYPE_COLOR;
-  ui.calColorPickerRow.querySelectorAll(".color-swatch").forEach((swatch) => {
+  rowElement.querySelectorAll(".color-swatch").forEach((swatch) => {
     swatch.classList.toggle("selected", swatch.dataset.color === safeColor);
   });
 }
 
-function getSelectedColor() {
-  const selected = ui.calColorPickerRow.querySelector(".color-swatch.selected");
+function getSelectedColor(rowElement) {
+  const selected = rowElement.querySelector(".color-swatch.selected");
   return selected ? selected.dataset.color : DEFAULT_ITEM_TYPE_COLOR;
 }
 
@@ -1130,7 +1140,7 @@ async function syncCalModalTypeFields(options = {}) {
     }
 
     if (!state.calColorManuallySet) {
-      setSelectedColor(getItemTypeColor(knownType));
+      setSelectedColor(ui.calColorPickerRow, getItemTypeColor(knownType));
     }
 
     if (autoSuggestQuantity && !ui.calEntryId.value) {
@@ -1478,6 +1488,32 @@ async function ensureSeedData() {
       isSeed: true,
     });
     existingNames.add(normalized);
+  }
+}
+
+async function migrateFlagExistingSeedItemTypes() {
+  const fallbackSeeds = [
+    { name: "1g Banana", calPerUnit: 0.89 },
+    { name: "1g Yogurt, plain", calPerUnit: 0.61 },
+    { name: "1 egg", calPerUnit: 75 },
+  ];
+  const jsonSeed = Array.isArray(window.FOOD_TYPE_SEED) ? window.FOOD_TYPE_SEED : [];
+  const seeds = jsonSeed.length > 0 ? jsonSeed : fallbackSeeds;
+  const seedNames = new Set(seeds.map((seed) => String(seed?.name || "").trim().toLowerCase()));
+
+  const existingItems = await listAll(STORE_ITEM_TYPES);
+  for (const item of existingItems) {
+    if (item.isSeed) {
+      continue;
+    }
+    const normalized = String(item.name || "").trim().toLowerCase();
+    if (!seedNames.has(normalized)) {
+      continue;
+    }
+    await updateRecord(STORE_ITEM_TYPES, {
+      ...item,
+      isSeed: true,
+    });
   }
 }
 

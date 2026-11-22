@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Banana Tracker</title>
   <link rel="icon" type="image/png" sizes="16x16" href="banana_icon_16.png" />
-  <link rel="stylesheet" href="styles.css?v=20261122g" />
+  <link rel="stylesheet" href="styles.css?v=20261122h" />
 </head>
 <body>
   <div class="app-shell">
@@ -49,6 +49,12 @@
 
       <section id="tab-data" class="tab-section">
         <div class="card">
+          <h2>Maintenance</h2>
+          <button id="deep-refresh-btn" type="button" class="danger">Deep refresh app</button>
+          <p id="deep-refresh-status" class="field-hint"></p>
+        </div>
+
+        <div class="card">
           <h2>Targets</h2>
           <form id="targets-form">
             <label for="daily-calorie-target">Daily calory target</label>
@@ -79,12 +85,6 @@
           <h2>Item Types</h2>
           <input id="item-type-search" type="text" placeholder="Search item types" autocomplete="off" />
           <ul id="item-type-list" class="list"></ul>
-        </div>
-
-        <div class="card">
-          <h2>Maintenance</h2>
-          <button id="deep-refresh-btn" type="button" class="danger">Deep refresh app</button>
-          <p id="deep-refresh-status" class="field-hint"></p>
         </div>
       </section>
     </main>
@@ -157,6 +157,8 @@
           <button id="item-type-edit-cal-sign-btn" type="button" class="qty-adjust-button" aria-label="Toggle positive/negative">±</button>
         </div>
 
+        <div class="color-picker-row" id="item-type-edit-color-picker-row" role="group" aria-label="Item color"></div>
+
         <div class="row-actions three-columns">
           <button id="item-type-edit-save-btn" type="submit">Save</button>
           <button id="item-type-edit-cancel-btn" type="button">Cancel</button>
@@ -197,6 +199,6 @@
   </div>
 
   <script src="food_seed_data.js" type="application/javascript"></script>
-  <script src="app.js?v=20261122g" type="application/javascript"></script>
+  <script src="app.js?v=20261122h" type="application/javascript"></script>
 </body>
 </html>
