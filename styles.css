@@ -32,8 +32,8 @@ body {
 }
 
 .app-shell {
-  width: 972px;
-  max-width: 972px;
+  width: min(900px, 90vw);
+  max-width: 90vw;
   margin: 0 auto;
   padding: 0.6rem;
 }
@@ -163,19 +163,55 @@ h2 {
 
 .quantity-row {
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   gap: 0.4rem;
   align-items: center;
   margin-top: 0.55rem;
 }
 
 .quantity-total-row {
-  grid-template-columns: auto minmax(240px, 42%) 50px 50px auto minmax(240px, 42%);
+  grid-template-columns: auto minmax(0, 1fr) 50px 50px;
+  grid-template-areas:
+    "qty-label qty-input qty-plus qty-minus"
+    "total-label total-value . .";
 }
 
 .quantity-total-row #cal-quantity,
 .quantity-total-row .total-value {
   width: 100%;
+}
+
+.quantity-total-row > :nth-child(1) {
+  grid-area: qty-label;
+}
+
+.quantity-total-row > :nth-child(2) {
+  grid-area: qty-input;
+}
+
+.quantity-total-row > :nth-child(3) {
+  grid-area: qty-plus;
+}
+
+.quantity-total-row > :nth-child(4) {
+  grid-area: qty-minus;
+}
+
+.quantity-total-row > :nth-child(5) {
+  grid-area: total-label;
+}
+
+.quantity-total-row > :nth-child(6) {
+  grid-area: total-value;
+}
+
+.date-time-row {
+  grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
+}
+
+.date-time-row #cal-entry-date,
+.date-time-row #cal-entry-time {
+  min-width: 0;
 }
 
 .quantity-label {
@@ -201,6 +237,7 @@ h2 {
 }
 
 .total-value {
+  display: block;
   font-variant-numeric: tabular-nums;
   font-weight: 700;
   text-align: right;
@@ -417,8 +454,8 @@ button.danger {
 .modal-panel {
   position: relative;
   z-index: 1;
-  width: 92vw;
-  max-width: 900px;
+  width: min(900px, 92vw);
+  max-width: 92vw;
   margin-top: 0.45rem;
   background: var(--card);
   border: 1px solid var(--border);
@@ -434,6 +471,7 @@ button.danger {
 
 .modal-panel input,
 .modal-panel button {
+  min-width: 0;
   padding: 0.58rem;
   font-size: 1rem;
 }
