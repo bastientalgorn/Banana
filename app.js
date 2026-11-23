@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.19.0",
+    date: "2026-11-23",
+    summary: "New entry \"Type\" field now has a custom dropdown (works on mobile): shows previously-used matches first, then names starting with your text, then other matches by increasing name length. Data tab Maintenance now has a \"fewer than N words\" filter to trim the Templates list.",
+  },
+  {
     version: "1.18.0",
     date: "2026-11-22",
     summary: "Predefined templates now generated from USDA SR Legacy (7,800+ foods, incl. butter/oils previously missing), each tagged with a simple category (Meat, Dairy, Fish, etc.); common whole-unit foods like \"1 egg\"/\"1 apple\" are kept alongside gram-based entries; Data tab now requires a search once the template list is large.",
@@ -116,6 +121,9 @@ const state = {
   templates: [],
   selectedDate: todayString(),
   calColorManuallySet: false,
+  templateUsage: new Map(),
+  calDropdownSuggestions: [],
+  calDropdownActiveIndex: -1,
 };
 
 const ui = {
@@ -136,7 +144,7 @@ const ui = {
   calEntryCancelBtn: document.getElementById("cal-entry-cancel-btn"),
   calEntryDeleteBtn: document.getElementById("cal-entry-delete-btn"),
   calTemplateText: document.getElementById("cal-template-text"),
-  calTemplateList: document.getElementById("cal-template-list"),
+  calTemplateDropdown: document.getElementById("cal-template-dropdown"),
   calItemCal: document.getElementById("cal-item-cal"),
   calItemCalSignBtn: document.getElementById("cal-item-cal-sign-btn"),
   calQuantity: document.getElementById("cal-quantity"),
@@ -174,6 +182,7 @@ const ui = {
   dailyCalorieTarget: document.getElementById("daily-calorie-target"),
   weightTarget: document.getElementById("weight-target"),
   templateSearch: document.getElementById("template-search"),
+  templateMaxWords: document.getElementById("template-max-words"),
   templateList: document.getElementById("template-list"),
   templateModal: document.getElementById("template-modal"),
   templateModalBackdrop: document.getElementById("template-modal-backdrop"),
@@ -212,7 +221,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   state.templates = await listTemplates();
   ui.weightTodayDate.value = state.selectedDate;
 
-  syncTemplateSelects();
+  await refreshTemplateUsage();
   await refreshCalView();
   await refreshWeightView();
   await refreshDataView();
@@ -232,12 +241,44 @@ function bindUiEvents() {
   ui.calEntryModalBackdrop.addEventListener("click", () => closeCalEntryModal());
 
   ui.calTemplateText.addEventListener("input", async () => {
+    updateCalTemplateDropdown();
     await syncCalModalTypeFields({ autoSuggestQuantity: true });
   });
 
-  ui.calTemplateText.addEventListener("change", async () => {
-    await syncCalModalTypeFields({ autoSuggestQuantity: true });
+  ui.calTemplateText.addEventListener("focus", () => {
+    updateCalTemplateDropdown();
   });
+
+  ui.calTemplateText.addEventListener("blur", () => {
+    // Delay so a dropdown item's mousedown handler can still fire first.
+    setTimeout(() => hideCalTemplateDropdown(), 150);
+  });
+
+  ui.calTemplateText.addEventListener("keydown", (event) => {
+    if (ui.calTemplateDropdown.classList.contains("hidden")) {
+      return;
+    }
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      moveCalTemplateDropdownSelection(1);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      moveCalTemplateDropdownSelection(-1);
+    } else if (event.key === "Enter") {
+      if (state.calDropdownActiveIndex >= 0) {
+        event.preventDefault();
+        selectCalTemplateDropdownItem(state.calDropdownActiveIndex);
+      }
+    } else if (event.key === "Escape") {
+      hideCalTemplateDropdown();
+    }
+  });
+
+  if (ui.templateMaxWords) {
+    ui.templateMaxWords.addEventListener("input", async () => {
+      await refreshDataView();
+    });
+  }
 
   ui.calItemCal.addEventListener("input", () => {
     refreshCalModalComputedFields();
@@ -621,7 +662,7 @@ function renderVersionInfo() {
 
 async function reloadTemplatesAndRefresh() {
   state.templates = await listTemplates();
-  syncTemplateSelects();
+  await refreshTemplateUsage();
   await refreshCalView();
   await refreshWeightView();
   await refreshDataView();
@@ -716,12 +757,136 @@ async function clearAllHistory() {
   await refreshDataView();
 }
 
-function syncTemplateSelects() {
-  const datalistOptions = state.templates
-    .map((template) => `<option value="${escapeHtml(template.name)}"></option>`)
-    .join("");
+async function refreshTemplateUsage() {
+  const entries = await listAll(STORE_CAL_ENTRIES);
+  const usage = new Map();
+  for (const entry of entries) {
+    if (!entry.templateId) {
+      continue;
+    }
+    const timestamp = String(entry.createdAt || entry.date || "");
+    const existing = usage.get(entry.templateId);
+    if (!existing || timestamp > existing) {
+      usage.set(entry.templateId, timestamp);
+    }
+  }
+  state.templateUsage = usage;
+}
 
-  ui.calTemplateList.innerHTML = datalistOptions;
+function countNameWords(name) {
+  const matches = String(name || "").match(/[A-Za-z]+/g);
+  return matches ? matches.length : 0;
+}
+
+function stripLeadingUnitPrefix(name) {
+  // Strips a leading "1g " or "1 " unit-count prefix used by generated seed
+  // names, so "starts with S" matching feels natural (e.g. typing "egg"
+  // should count "1g Egg" as starting with "egg").
+  return String(name || "").replace(/^1g?\s+/i, "");
+}
+
+function buildCalTemplateSuggestions(query) {
+  const trimmedQuery = String(query || "").trim().toLowerCase();
+  if (!trimmedQuery) {
+    return [];
+  }
+
+  const MAX_SUGGESTIONS = 50;
+  const previouslyUsed = [];
+  const startsWith = [];
+  const others = [];
+
+  for (const template of state.templates) {
+    const name = String(template.name || "");
+    const lowerName = name.toLowerCase();
+    if (!lowerName.includes(trimmedQuery)) {
+      continue;
+    }
+
+    const lastUsedAt = state.templateUsage.get(template.id);
+    if (lastUsedAt) {
+      previouslyUsed.push({ template, lastUsedAt });
+      continue;
+    }
+
+    const strippedName = stripLeadingUnitPrefix(name).toLowerCase();
+    if (strippedName.startsWith(trimmedQuery)) {
+      startsWith.push(template);
+    } else {
+      others.push(template);
+    }
+  }
+
+  previouslyUsed.sort((left, right) => String(right.lastUsedAt).localeCompare(String(left.lastUsedAt)));
+  const byLengthThenName = (left, right) =>
+    String(left.name || "").length - String(right.name || "").length ||
+    String(left.name || "").localeCompare(String(right.name || ""));
+  startsWith.sort(byLengthThenName);
+  others.sort(byLengthThenName);
+
+  const ranked = [...previouslyUsed.map((entry) => entry.template), ...startsWith, ...others];
+  return ranked.slice(0, MAX_SUGGESTIONS);
+}
+
+function hideCalTemplateDropdown() {
+  state.calDropdownSuggestions = [];
+  state.calDropdownActiveIndex = -1;
+  ui.calTemplateDropdown.innerHTML = "";
+  ui.calTemplateDropdown.classList.add("hidden");
+}
+
+function selectCalTemplateDropdownItem(index) {
+  const template = state.calDropdownSuggestions[index];
+  if (!template) {
+    return;
+  }
+  ui.calTemplateText.value = template.name;
+  hideCalTemplateDropdown();
+  void syncCalModalTypeFields({ autoSuggestQuantity: true });
+}
+
+function renderCalTemplateDropdown(suggestions) {
+  state.calDropdownSuggestions = suggestions;
+  state.calDropdownActiveIndex = -1;
+  ui.calTemplateDropdown.innerHTML = "";
+
+  if (suggestions.length === 0) {
+    ui.calTemplateDropdown.classList.add("hidden");
+    return;
+  }
+
+  suggestions.forEach((template, index) => {
+    const item = document.createElement("div");
+    item.className = "autocomplete-item";
+    item.textContent = `${template.name} (${formatCal(template.calPerUnit)} kcal)`;
+    item.addEventListener("mousedown", (event) => {
+      // mousedown fires before the input's blur handler hides the dropdown.
+      event.preventDefault();
+      selectCalTemplateDropdownItem(index);
+    });
+    ui.calTemplateDropdown.appendChild(item);
+  });
+
+  ui.calTemplateDropdown.classList.remove("hidden");
+}
+
+function updateCalTemplateDropdown() {
+  const suggestions = buildCalTemplateSuggestions(ui.calTemplateText.value);
+  renderCalTemplateDropdown(suggestions);
+}
+
+function moveCalTemplateDropdownSelection(delta) {
+  const items = Array.from(ui.calTemplateDropdown.querySelectorAll(".autocomplete-item"));
+  if (items.length === 0) {
+    return;
+  }
+
+  items.forEach((item) => item.classList.remove("active"));
+  const current = state.calDropdownActiveIndex;
+  const nextIndex = ((current < 0 ? -1 : current) + delta + items.length) % items.length;
+  state.calDropdownActiveIndex = nextIndex;
+  items[nextIndex].classList.add("active");
+  items[nextIndex].scrollIntoView({ block: "nearest" });
 }
 
 async function refreshCalView() {
@@ -988,16 +1153,23 @@ function drawWeightChart(records, targetWeight) {
 async function refreshDataView() {
   ui.templateList.innerHTML = "";
   const query = String(ui.templateSearch.value || "").trim().toLowerCase();
-  const filteredTemplates = query
+  const maxWordsRaw = ui.templateMaxWords ? Number(ui.templateMaxWords.value) : NaN;
+  const maxWords = Number.isInteger(maxWordsRaw) && maxWordsRaw > 0 ? maxWordsRaw : null;
+
+  let filteredTemplates = query
     ? state.templates.filter((template) => String(template.name || "").toLowerCase().includes(query))
     : state.templates;
 
+  if (maxWords !== null) {
+    filteredTemplates = filteredTemplates.filter((template) => countNameWords(template.name) < maxWords);
+  }
+
   // With thousands of seeded templates now available, rendering the full
   // unfiltered list into the DOM would be slow and overwhelming. Require a
-  // search term once the list grows large; small/custom lists still show
-  // everything by default like before.
+  // search term (or a word-count trim) once the list grows large;
+  // small/custom lists still show everything by default like before.
   const UNFILTERED_DISPLAY_LIMIT = 150;
-  if (!query && state.templates.length > UNFILTERED_DISPLAY_LIMIT) {
+  if (!query && maxWords === null && state.templates.length > UNFILTERED_DISPLAY_LIMIT) {
     const promptNode = document.createElement("li");
     promptNode.className = "list-item";
     promptNode.textContent = `Type to search ${state.templates.length} templates...`;

@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Banana Tracker</title>
   <link rel="icon" type="image/png" sizes="16x16" href="banana_icon_16.png" />
-  <link rel="stylesheet" href="styles.css?v=20261122p" />
+  <link rel="stylesheet" href="styles.css?v=20261123a" />
 </head>
 <body>
   <div class="app-shell">
@@ -58,6 +58,8 @@
             <p id="deep-refresh-status" class="field-hint"></p>
             <button id="clear-all-history-btn" type="button" class="danger">Clear all history</button>
             <p id="clear-all-history-status" class="field-hint"></p>
+            <label for="template-max-words">Trim Templates list: only show names with fewer than N words</label>
+            <input id="template-max-words" type="number" min="1" step="1" inputmode="numeric" placeholder="No limit" />
             <ul id="changelog-list" class="changelog-list"></ul>
           </div>
         </div>
@@ -112,9 +114,9 @@
       <form id="cal-entry-form">
         <input id="cal-entry-id" type="hidden" />
 
-        <div class="type-row one-column">
-          <input id="cal-template-text" type="text" maxlength="80" autocomplete="off" list="cal-template-list" required="required" placeholder="Type" />
-          <datalist id="cal-template-list"></datalist>
+        <div class="type-row one-column autocomplete-wrap">
+          <input id="cal-template-text" type="text" maxlength="80" autocomplete="off" required="required" placeholder="Type" />
+          <div id="cal-template-dropdown" class="autocomplete-dropdown hidden"></div>
         </div>
 
         <div class="type-row">
@@ -207,6 +209,6 @@
   </div>
 
   <script src="food_seed_data.js?v=20261122c" type="application/javascript"></script>
-  <script src="app.js?v=20261122t" type="application/javascript"></script>
+  <script src="app.js?v=20261123a" type="application/javascript"></script>
 </body>
 </html>
