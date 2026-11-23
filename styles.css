@@ -242,41 +242,6 @@ h3 {
   position: relative;
 }
 
-.input-clear-button {
-  position: absolute;
-  top: 50%;
-  right: 0.5rem;
-  transform: translateY(-50%);
-  margin: 0;
-  width: 28px;
-  min-width: 28px;
-  height: 25px;
-  min-height: 25px;
-  padding: 0;
-  border: none;
-  border-radius: 999px;
-  background: var(--accent-2);
-  color: #081018;
-  font-weight: 700;
-  font-size: 0.85rem;
-  line-height: 1;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.input-clear-button:hover,
-.input-clear-button:focus {
-  background: var(--accent-2);
-  color: #081018;
-  filter: brightness(1.1);
-}
-
-.autocomplete-wrap input[type="text"] {
-  padding-right: 2.6rem;
-}
-
 .autocomplete-dropdown {
   position: absolute;
   top: 100%;
@@ -336,10 +301,10 @@ h3 {
 }
 
 .quantity-total-row {
-  grid-template-columns: auto minmax(0, 1fr) 50px 50px;
+  grid-template-columns: auto minmax(0, 1fr) 50px 50px 50px;
   grid-template-areas:
-    "qty-label qty-input qty-plus qty-minus"
-    "total-label total-value . .";
+    "qty-label qty-input qty-plus qty-minus qty-frac"
+    "total-label total-value total-value total-value total-value";
 }
 
 .quantity-total-row #cal-quantity,
@@ -364,10 +329,14 @@ h3 {
 }
 
 .quantity-total-row > :nth-child(5) {
-  grid-area: total-label;
+  grid-area: qty-frac;
 }
 
 .quantity-total-row > :nth-child(6) {
+  grid-area: total-label;
+}
+
+.quantity-total-row > :nth-child(7) {
   grid-area: total-value;
 }
 
@@ -432,6 +401,11 @@ h3 {
   border-radius: 999px;
   font-size: 1.05rem;
   line-height: 1;
+}
+
+#qty-fraction-btn {
+  font-size: 0.7rem;
+  font-weight: 700;
 }
 
 .total-label {

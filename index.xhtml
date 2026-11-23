@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Banana Tracker</title>
   <link rel="icon" type="image/png" sizes="16x16" href="banana_icon_16.png" />
-  <link rel="stylesheet" href="styles.css?v=20261123i" />
+  <link rel="stylesheet" href="styles.css?v=20261123k" />
 </head>
 <body>
   <div id="app-loading-overlay" class="app-loading-overlay">
@@ -118,9 +118,9 @@
       <form id="cal-entry-form">
         <input id="cal-entry-id" type="hidden" />
 
-        <div class="type-row one-column autocomplete-wrap">
+        <div class="type-row autocomplete-wrap">
           <input id="cal-template-text" type="text" maxlength="80" autocomplete="off" required="required" placeholder="Type" />
-          <button id="cal-template-clear-btn" type="button" class="input-clear-button" aria-label="Clear name" title="Clear name">&#10005;</button>
+          <button id="cal-template-clear-btn" type="button" class="qty-adjust-button" aria-label="Clear name" title="Clear name">&#10005;</button>
           <div id="cal-template-dropdown" class="autocomplete-dropdown hidden"></div>
         </div>
 
@@ -131,9 +131,10 @@
 
         <div class="quantity-row quantity-total-row">
           <span class="quantity-label">Quantity</span>
-          <input id="cal-quantity" type="number" min="1" step="1" inputmode="numeric" required="required" />
+          <input id="cal-quantity" type="text" inputmode="decimal" required="required" />
           <button id="qty-plus-btn" type="button" class="qty-adjust-button" aria-label="Increase quantity">+</button>
           <button id="qty-minus-btn" type="button" class="qty-adjust-button" aria-label="Decrease quantity">-</button>
+          <button id="qty-fraction-btn" type="button" class="qty-adjust-button" aria-label="Convert to 1/x fraction" title="Convert to 1/x">1/x</button>
           <span class="quantity-label total-label">Total calories</span>
           <span id="cal-total-calories" class="total-value">--</span>
         </div>
@@ -214,6 +215,6 @@
   </div>
 
   <script src="food_seed_data.js?v=20261124b" type="application/javascript"></script>
-  <script src="app.js?v=20261123k" type="application/javascript"></script>
+  <script src="app.js?v=20261123p" type="application/javascript"></script>
 </body>
 </html>

@@ -11,6 +11,31 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.19.21",
+    date: "2026-11-23",
+    summary: "The quantity +/- buttons now round the current quantity to the nearest whole number first, then add or subtract 1 (e.g. '1/6' pressed '+' becomes '1', not a fractional increment).",
+  },
+  {
+    version: "1.19.20",
+    date: "2026-11-23",
+    summary: "Added a '1/x' button next to quantity's +/- buttons: converts the entered number (e.g. 6) into a fraction (1/6), stored as that exact string and only parsed to a number when computing totals. Click again to toggle back.",
+  },
+  {
+    version: "1.19.19",
+    date: "2026-11-23",
+    summary: "Entry quantity is now stored as the exact text you typed (e.g. '0.33') instead of a rounded number, avoiding floating-point rounding artifacts; it's only parsed to a number when computing totals.",
+  },
+  {
+    version: "1.19.18",
+    date: "2026-11-23",
+    summary: "The name field's clear (\u2715) button is now a separate pill-shaped button next to the (now narrower) name box, matching the other buttons' style, instead of floating inside the text box.",
+  },
+  {
+    version: "1.19.17",
+    date: "2026-11-23",
+    summary: "Entry quantity can now be a decimal number (e.g. 0.33), not just a whole integer.",
+  },
+  {
     version: "1.19.16",
     date: "2026-11-23",
     summary: "Added a tiny version number label in the top-right corner, above the Data tab button.",
@@ -239,6 +264,7 @@ const ui = {
   calColorPickerRow: document.getElementById("cal-color-picker-row"),
   qtyPlusBtn: document.getElementById("qty-plus-btn"),
   qtyMinusBtn: document.getElementById("qty-minus-btn"),
+  qtyFractionBtn: document.getElementById("qty-fraction-btn"),
   calEntryList: document.getElementById("cal-entry-list"),
   weightTodayForm: document.getElementById("weight-today-form"),
   weightDateDisplay: document.getElementById("weight-date-display"),
@@ -464,18 +490,35 @@ function bindUiEvents() {
   });
 
   ui.qtyPlusBtn.addEventListener("click", () => {
-    const current = Number.parseInt(ui.calQuantity.value || "1", 10);
-    const safeValue = Number.isInteger(current) && current > 0 ? current : 1;
-    ui.calQuantity.value = String(safeValue + 1);
+    const current = parseQuantityValue(ui.calQuantity.value || "1");
+    const safeValue = Number.isFinite(current) && current > 0 ? current : 1;
+    const rounded = Math.round(safeValue);
+    ui.calQuantity.value = String(rounded + 1);
     refreshCalModalComputedFields();
   });
 
   ui.qtyMinusBtn.addEventListener("click", () => {
-    const current = Number.parseInt(ui.calQuantity.value || "1", 10);
-    const safeValue = Number.isInteger(current) && current > 0 ? current : 1;
-    ui.calQuantity.value = String(Math.max(1, safeValue - 1));
+    const current = parseQuantityValue(ui.calQuantity.value || "1");
+    const safeValue = Number.isFinite(current) && current > 0 ? current : 1;
+    const rounded = Math.round(safeValue);
+    ui.calQuantity.value = String(Math.max(1, rounded - 1));
     refreshCalModalComputedFields();
   });
+
+  if (ui.qtyFractionBtn) {
+    ui.qtyFractionBtn.addEventListener("click", () => {
+      const raw = String(ui.calQuantity.value || "").trim();
+      const existingFraction = raw.match(/^1\s*\/\s*(.+)$/);
+      if (existingFraction) {
+        // Already a "1/x" fraction -- toggle back to the plain denominator.
+        ui.calQuantity.value = existingFraction[1].trim();
+      } else if (raw && Number.isFinite(Number(raw))) {
+        // Plain number "6" -> fraction "1/6", stored as that exact string.
+        ui.calQuantity.value = `1/${raw}`;
+      }
+      refreshCalModalComputedFields();
+    });
+  }
 
   ui.calQuantity.addEventListener("input", () => {
     refreshCalModalComputedFields();
@@ -1093,7 +1136,7 @@ async function refreshCalView() {
       continue;
     }
 
-    const lineTotal = getEntryCalPerItem(entry, template) * entry.quantity;
+    const lineTotal = getEntryCalPerItem(entry, template) * parseQuantityValue(entry.quantity);
     if (entry.date === today) {
       total += lineTotal;
     }
@@ -1413,10 +1456,15 @@ async function saveCalEntryFromModal() {
     throw new Error("Time is required (HH:MM).");
   }
 
-  const quantity = Number(ui.calQuantity.value);
-  if (!Number.isInteger(quantity) || quantity < 1) {
-    throw new Error("Quantity must be a positive integer.");
+  const quantityRaw = String(ui.calQuantity.value || "").trim();
+  const quantityCheck = parseQuantityValue(quantityRaw);
+  if (!quantityRaw || !Number.isFinite(quantityCheck) || quantityCheck <= 0) {
+    throw new Error("Quantity must be a positive number.");
   }
+  // Store the quantity as the string the user typed (e.g. "0.33"), not a
+  // rounded/parsed float -- avoids binary floating-point artifacts
+  // creeping into the saved value. Only parsed to a number when doing math.
+  const storedQuantity = quantityRaw;
 
   const caloriesPerItem = parseCaloryPerItemInput(ui.calItemCal.value);
 
@@ -1449,7 +1497,7 @@ async function saveCalEntryFromModal() {
       id: editingEntryId,
       date: selectedDate,
       templateId: selectedTemplate.id,
-      quantity,
+      quantity: storedQuantity,
       createdAt: selectedTime,
       calPerItem: roundedCalories,
       color: selectedColor,
@@ -1461,7 +1509,7 @@ async function saveCalEntryFromModal() {
   await addRecord(STORE_CAL_ENTRIES, {
     date: selectedDate,
     templateId: selectedTemplate.id,
-    quantity,
+    quantity: storedQuantity,
     customName: typeName,
     createdAt: selectedTime,
     calPerItem: roundedCalories,
@@ -1480,7 +1528,8 @@ function openCalEntryModalForCreate(prefill = null) {
   const nextDate = prefill?.date || state.selectedDate || todayString();
   const nextTime = normalizeTimeString(prefill?.time) || currentTimeString();
   const nextTypeName = String(prefill?.typeName || "");
-  const nextQuantity = Number.isInteger(prefill?.quantity) && prefill.quantity > 0 ? prefill.quantity : 1;
+  const prefillQuantityNumber = parseQuantityValue(prefill?.quantity);
+  const nextQuantity = Number.isFinite(prefillQuantityNumber) && prefillQuantityNumber > 0 ? prefill.quantity : 1;
   ui.calEntryDate.value = nextDate;
   ui.calEntryTime.value = nextTime;
   ui.calTemplateText.value = nextTypeName;
@@ -1701,8 +1750,8 @@ async function syncCalModalTypeFields(options = {}) {
 
     if (autoSuggestQuantity && !ui.calEntryId.value) {
       const suggested = await getLastQuantityForTemplate(knownType.id);
-      const quantityValue = Number(ui.calQuantity.value);
-      if (!Number.isInteger(quantityValue) || quantityValue < 1) {
+      const quantityValue = parseQuantityValue(ui.calQuantity.value);
+      if (!Number.isFinite(quantityValue) || quantityValue <= 0) {
         ui.calQuantity.value = String(suggested);
       }
     }
@@ -1715,13 +1764,13 @@ async function syncCalModalTypeFields(options = {}) {
 
 function refreshCalModalComputedFields() {
   const typeName = String(ui.calTemplateText.value || "").trim();
-  const quantity = Number(ui.calQuantity.value);
+  const quantity = parseQuantityValue(ui.calQuantity.value);
   const caloriesRaw = String(ui.calItemCal.value || "").trim();
   const caloriesPerItem = Number(caloriesRaw);
   const selectedDate = String(ui.calEntryDate.value || "").trim();
   const selectedTime = normalizeTimeString(ui.calEntryTime.value);
 
-  const hasValidQuantity = Number.isInteger(quantity) && quantity > 0;
+  const hasValidQuantity = Number.isFinite(quantity) && quantity > 0;
   const hasValidCalories = caloriesRaw.length > 0 && Number.isFinite(caloriesPerItem);
 
   if (hasValidQuantity && hasValidCalories) {
@@ -1774,7 +1823,7 @@ function parseCaloryPerItemInput(rawValue) {
 async function getLastQuantityForTemplate(templateId) {
   const entries = await listAll(STORE_CAL_ENTRIES);
   const matched = entries
-    .filter((entry) => entry.templateId === templateId && Number.isInteger(entry.quantity) && entry.quantity > 0)
+    .filter((entry) => entry.templateId === templateId && Number.isFinite(parseQuantityValue(entry.quantity)) && parseQuantityValue(entry.quantity) > 0)
     .sort((left, right) => right.id - left.id);
 
   if (matched.length === 0) {
@@ -2230,7 +2279,7 @@ async function migrateLegacy100gTemplates() {
       await updateRecord(STORE_CAL_ENTRIES, {
         ...entry,
         templateId: targetTypeId,
-        quantity: Number(entry.quantity) * 100,
+        quantity: String(parseQuantityValue(entry.quantity) * 100),
       });
     }
 
@@ -2381,6 +2430,25 @@ function round1(value) {
 function roundTo(value, decimals) {
   const factor = 10 ** decimals;
   return Math.round(value * factor) / factor;
+}
+
+function parseQuantityValue(rawValue) {
+  // Quantities are stored/entered as plain strings (e.g. "0.33") so the
+  // exact typed text round-trips without floating-point rounding, but a
+  // "1/x" fraction form (e.g. "1/6") is also supported -- parse that as
+  // numerator/denominator. Returns NaN if the value isn't a valid plain
+  // number or a/b fraction.
+  const text = String(rawValue ?? "").trim();
+  const fractionMatch = text.match(/^(-?[0-9]*\.?[0-9]+)\s*\/\s*(-?[0-9]*\.?[0-9]+)$/);
+  if (fractionMatch) {
+    const numerator = Number(fractionMatch[1]);
+    const denominator = Number(fractionMatch[2]);
+    if (!Number.isFinite(numerator) || !Number.isFinite(denominator) || denominator === 0) {
+      return NaN;
+    }
+    return numerator / denominator;
+  }
+  return Number(text);
 }
 
 function formatCal(value) {
