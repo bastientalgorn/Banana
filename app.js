@@ -11,6 +11,16 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.19.11",
+    date: "2026-11-23",
+    summary: "Food template seed data: nested parenthetical groups in merged names are now collapsed into one (saving a few chars), and any name still over 120 characters after merging/cleanup is dropped entirely (7796 -> 5191 items, 358 KB).",
+  },
+  {
+    version: "1.19.10",
+    date: "2026-11-23",
+    summary: "Fixed the Data tab's Templates list: each template is now a single full-width box (name can wrap onto multiple lines) with the edit icon docked at the right, instead of a wrapped grid of narrow boxes.",
+  },
+  {
     version: "1.19.9",
     date: "2026-11-23",
     summary: "Sped up startup: 'Simplifying templates' now skips writing a template back to the database when nothing actually changed, and skips scanning calorie log entries entirely when there's nothing to merge -- avoids thousands of needless IndexedDB writes on every load.",

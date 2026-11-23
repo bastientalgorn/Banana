@@ -497,15 +497,18 @@ button.danger {
 }
 
 #template-list {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   gap: 0.5rem;
+  margin-top: 0.6rem;
 }
 
 #template-list .list-item {
-  width: auto;
-  max-width: 190px;
-  padding: 0.45rem 0.55rem;
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+}
+
+#template-list .cal-entry-row {
+  align-items: flex-start;
 }
 
 #template-list .cal-entry-label {
@@ -515,7 +518,7 @@ button.danger {
   overflow: visible;
   text-overflow: clip;
   word-break: break-word;
-  line-height: 1.2;
+  line-height: 1.3;
 }
 
 #template-list .icon-edit-button {

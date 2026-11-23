@@ -752,6 +752,45 @@ def write_seed_file(items: list[dict[str, Any]]) -> None:
     # data silently.
     assert_no_duplicate_names(ordered)
 
+    # Before dropping overly-long names: collapse nested parentheses down to
+    # a single outer pair (remove every "(" except the first, and every ")"
+    # except the last). Heavily-merged names can end up with several
+    # separate parenthetical groups (e.g. "... (A OR B) ... (C OR D)"); this
+    # folds them into one "(A OR B ... C OR D)" group, shortening the name
+    # a little and giving a few more entries a chance to land under the
+    # length cutoff below.
+    def collapse_parens(name: str) -> str:
+        first_open = name.find("(")
+        last_close = name.rfind(")")
+        if first_open == -1 or last_close == -1 or first_open > last_close:
+            return name
+        before = name[:first_open]
+        middle = name[first_open + 1 : last_close]
+        after = name[last_close + 1 :]
+        middle = middle.replace("(", "").replace(")", "")
+        return f"{before}({middle}){after}"
+
+    ordered = {
+        category: [[collapse_parens(str(name)), cal] for name, cal in pairs]
+        for category, pairs in ordered.items()
+    }
+
+    # Collapsing parentheses could theoretically make two previously-distinct
+    # names collide; check again before dropping long names.
+    assert_no_duplicate_names(ordered)
+
+    # Last step: drop any item whose name is still very long (>120 chars)
+    # after merging/cleanup -- these are typically heavily-merged entries
+    # with many parenthetical "OR" alternatives that are no longer practical
+    # to read/search in the app's suggestion list. Simple cutoff, applied
+    # last so it doesn't interfere with merge/cleanup logic above.
+    MAX_NAME_LENGTH = 120
+    ordered = {
+        category: [pair for pair in pairs if len(str(pair[0])) <= MAX_NAME_LENGTH]
+        for category, pairs in ordered.items()
+    }
+    ordered = {category: pairs for category, pairs in ordered.items() if pairs}
+
     # Render each [name, cal] pair on a single line (rather than json.dumps'
     # default of spreading nested arrays across multiple indented lines) to
     # further shrink the file -- whitespace/indentation otherwise adds up
