@@ -232,6 +232,32 @@ h3 {
   position: relative;
 }
 
+.input-clear-button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 2.4rem;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.input-clear-button:hover,
+.input-clear-button:focus {
+  color: var(--text);
+}
+
+.autocomplete-wrap input[type="text"] {
+  padding-right: 2.4rem;
+}
+
 .autocomplete-dropdown {
   position: absolute;
   top: 100%;

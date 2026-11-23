@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.19.12",
+    date: "2026-11-23",
+    summary: "Copying an entry no longer auto-focuses (and pops open suggestions over) the name field -- only a brand-new entry does. Added a small \u2715 clear button inside the entry name field.",
+  },
+  {
     version: "1.19.11",
     date: "2026-11-23",
     summary: "Food template seed data: nested parenthetical groups in merged names are now collapsed into one (saving a few chars), and any name still over 120 characters after merging/cleanup is dropped entirely (7796 -> 5191 items, 358 KB).",
@@ -202,6 +207,7 @@ const ui = {
   calEntryCancelBtn: document.getElementById("cal-entry-cancel-btn"),
   calEntryDeleteBtn: document.getElementById("cal-entry-delete-btn"),
   calTemplateText: document.getElementById("cal-template-text"),
+  calTemplateClearBtn: document.getElementById("cal-template-clear-btn"),
   calTemplateDropdown: document.getElementById("cal-template-dropdown"),
   calItemCal: document.getElementById("cal-item-cal"),
   calItemCalSignBtn: document.getElementById("cal-item-cal-sign-btn"),
@@ -356,6 +362,15 @@ function bindUiEvents() {
   ui.calTemplateText.addEventListener("focus", () => {
     updateCalTemplateDropdown();
   });
+
+  if (ui.calTemplateClearBtn) {
+    ui.calTemplateClearBtn.addEventListener("click", async () => {
+      ui.calTemplateText.value = "";
+      hideCalTemplateDropdown();
+      await syncCalModalTypeFields({ autoSuggestQuantity: true });
+      ui.calTemplateText.focus();
+    });
+  }
 
   document.addEventListener("pointerdown", (event) => {
     if (ui.calTemplateDropdown.classList.contains("hidden")) {
@@ -1440,7 +1455,16 @@ function openCalEntryModalForCreate(prefill = null) {
   refreshCalModalComputedFields();
   ui.calEntryModal.classList.remove("hidden");
   updateBodyModalState();
-  ui.calTemplateText.focus();
+  // Only auto-focus the name field (and its suggestion dropdown) for a
+  // brand-new blank entry. When duplicating an existing entry (prefill is
+  // set), the name is already filled in, and auto-focusing would pop open
+  // the suggestions dropdown over the rest of the form -- so leave focus
+  // alone (on nothing) in that case.
+  if (!prefill) {
+    ui.calTemplateText.focus();
+  } else if (document.activeElement && typeof document.activeElement.blur === "function") {
+    document.activeElement.blur();
+  }
 }
 
 function openCalEntryModalForEdit(entry) {
