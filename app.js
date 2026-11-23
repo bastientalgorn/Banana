@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.19.24",
+    date: "2026-11-23",
+    summary: "Removed template auto-merging by name entirely: templates are never combined just because they share a name (seed templates are already guaranteed unique names upstream, and user-created templates like 'Pizza' at 500 cal and 'Pizza' at 800 cal should both be allowed to exist). Cleanup now only handles renaming/deleting known-bad entries.",
+  },
+  {
     version: "1.19.23",
     date: "2026-11-23",
     summary: "The calorie total in the entry list now also shrinks its font size automatically for long numbers, just like the quantity.",
@@ -2306,9 +2311,7 @@ async function simplifyAndPruneTemplates() {
   }
 
   const deletionNameSet = new Set(["1h run", "2h bike"]);
-  const keepersByName = new Map();
   const targetBySourceId = new Map();
-  const caloriesByKeeperId = new Map();
   const idsToDelete = new Set();
   const idsToRename = new Map();
 
@@ -2324,31 +2327,21 @@ async function simplifyAndPruneTemplates() {
       continue;
     }
 
+    // Note: templates are never merged by name. Seed templates are already
+    // guaranteed unique by name (duplicates/renames are handled upstream by
+    // pruneStaleSeedTemplates/ensureSeedData), and user-created templates
+    // must never be silently merged just because the name matches another
+    // template -- e.g. a user may intentionally keep both {Pizza, 500} and
+    // {Pizza, 800}. This loop only simplifies/renames names in place.
     const simplifiedName = simplifyTemplateName(rawName);
-    const simplifiedKey = normalizeNameKey(simplifiedName);
-    const existingKeeper = keepersByName.get(simplifiedKey);
-
-    if (!existingKeeper) {
-      keepersByName.set(simplifiedKey, template.id);
-      targetBySourceId.set(template.id, template.id);
-      caloriesByKeeperId.set(template.id, [Number.isFinite(calories) ? calories : 0]);
-      if (simplifiedName !== rawName) {
-        idsToRename.set(template.id, simplifiedName);
-      }
-      continue;
+    if (simplifiedName !== rawName) {
+      idsToRename.set(template.id, simplifiedName);
     }
-
-    targetBySourceId.set(template.id, existingKeeper);
-    idsToDelete.add(template.id);
-    if (!caloriesByKeeperId.has(existingKeeper)) {
-      caloriesByKeeperId.set(existingKeeper, []);
-    }
-    caloriesByKeeperId.get(existingKeeper).push(Number.isFinite(calories) ? calories : 0);
   }
 
   // Only bother touching cal entries if some template is actually being
-  // merged/deleted -- avoids loading the entire (potentially large) cal
-  // entries store on every load when there's nothing to re-point.
+  // deleted -- avoids loading the entire (potentially large) cal entries
+  // store on every load when there's nothing to re-point.
   if (idsToDelete.size > 0) {
     const allEntries = await listAll(STORE_CAL_ENTRIES);
     for (const entry of allEntries) {
@@ -2359,14 +2352,6 @@ async function simplifyAndPruneTemplates() {
       const targetId = targetBySourceId.get(entry.templateId);
       if (targetId === null) {
         await deleteRecord(STORE_CAL_ENTRIES, entry.id);
-        continue;
-      }
-
-      if (targetId !== entry.templateId) {
-        await updateRecord(STORE_CAL_ENTRIES, {
-          ...entry,
-          templateId: targetId,
-        });
       }
     }
   }
@@ -2376,24 +2361,14 @@ async function simplifyAndPruneTemplates() {
       continue;
     }
 
-    const renamed = idsToRename.get(template.id) || String(template.name || "").trim();
-    const cals = caloriesByKeeperId.get(template.id) || [Number(template.calPerUnit) || 0];
-    const avgCalories = cals.length > 0 ? cals.reduce((sum, value) => sum + value, 0) / cals.length : Number(template.calPerUnit) || 0;
-    const roundedCalories = roundTo(avgCalories, 3);
-
-    // Skip the write entirely if nothing actually changed -- with
-    // thousands of already-simplified seed templates, this avoids one
-    // IndexedDB write transaction per template on every single load.
-    const nameUnchanged = renamed === String(template.name || "").trim();
-    const caloriesUnchanged = roundedCalories === Number(template.calPerUnit);
-    if (nameUnchanged && caloriesUnchanged) {
+    const renamed = idsToRename.get(template.id);
+    if (!renamed || renamed === String(template.name || "").trim()) {
       continue;
     }
 
     await updateRecord(STORE_TEMPLATES, {
       ...template,
       name: renamed,
-      calPerUnit: roundedCalories,
     });
   }
 
