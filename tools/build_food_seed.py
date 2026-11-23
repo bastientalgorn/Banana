@@ -518,6 +518,62 @@ def _balance_parentheses(name: str) -> str:
     return name
 
 
+def _has_valid_parens(name: str) -> bool:
+    """Return False if `name` contains a ')' with no matching preceding
+    '(' (a stray/orphan closing paren) -- a sign that a common-prefix cut
+    landed awkwardly inside an existing parenthetical group from a prior
+    merge pass. (Unclosed '(' is fine -- `_balance_parentheses` already
+    appends the missing ')'.)"""
+    depth = 0
+    for ch in name:
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+            if depth < 0:
+                return False
+    return True
+
+
+def build_merged_name(names: list[str]) -> str:
+    """Build a merged name for a group of T similar items as:
+    "<words common to all items> (<extra for item 1> OR <extra for item 2>
+    OR ...)". The common part is trimmed to a clean word boundary (never
+    cut mid-word). Each item's remaining "extra" text (after the common
+    part) is listed inside parentheses, separated by " OR "; duplicate
+    extras are only listed once, and an item with no extra (i.e. its name
+    IS exactly the common part) is represented as "plain". This keeps every
+    merged name unique to its specific group of underlying items, instead
+    of collapsing to a shorter string that could collide with an unrelated,
+    already-existing entry."""
+    common_prefix = _longest_common_prefix(names)
+    common = _trim_to_clean_boundary(common_prefix, names)
+    if not common:
+        common = common_prefix
+
+    common_len = len(common)
+    extras: list[str] = []
+    seen_extras: set[str] = set()
+    for name in names:
+        extra = name[common_len:]
+        extra = extra.lstrip(" ,;:-")
+        extra = extra.rstrip()
+        if not extra:
+            extra = "plain"
+        if extra not in seen_extras:
+            seen_extras.add(extra)
+            extras.append(extra)
+
+    if len(extras) == 1 and extras[0] == "plain":
+        # Every item's name was identical to the common part (shouldn't
+        # normally happen since the group has >1 distinct name), just
+        # return the common part.
+        return common
+
+    merged_name = f"{common} ({' OR '.join(extras)})"
+    return _balance_parentheses(merged_name)
+
+
 def merge_similar_items(
     pairs: list[list[Any]],
     n: int = DEFAULT_MERGE_PREFIX_WORDS,
@@ -528,12 +584,13 @@ def merge_similar_items(
     words (since pairs are alphabetically sorted, all items sharing that
     prefix are already contiguous). For each whole block, check the
     min/max calorie ratio across ALL items in the block: if it satisfies
-    `max_ratio`, merge the whole block into one representative entry (name =
-    longest common prefix across the block, trimmed to a clean
-    word/punctuation boundary; calories = average). If the block's ratio
-    does not qualify, leave every item in the block unmerged/untouched --
-    we do NOT merge a partial sub-run, to avoid producing multiple separate
-    merged entries that collapse to the same (ambiguous) name."""
+    `max_ratio`, merge the whole block into one representative entry (name
+    built by `build_merged_name` -- the common prefix plus each item's
+    distinguishing suffix listed in parentheses; calories = average). If
+    the block's ratio does not qualify, leave every item in the block
+    unmerged/untouched -- we do NOT merge a partial sub-run, to avoid
+    producing multiple separate merged entries that collapse to the same
+    (ambiguous) name."""
     merged: list[list[Any]] = []
     length = len(pairs)
     i = 0
@@ -557,17 +614,16 @@ def merge_similar_items(
             block_max = max(calories)
             if block_min > 0 and block_max < max_ratio * block_min:
                 group_names = [str(b[0]) for b in block]
-                common_prefix = _longest_common_prefix(group_names)
-                merged_name = _trim_to_clean_boundary(common_prefix, group_names)
-                if not merged_name:
-                    # Fallback: shouldn't normally happen since all names
-                    # share at least `prefix`, but guard against an empty
-                    # result.
-                    merged_name = _trim_to_clean_boundary(prefix, group_names) or prefix
-                avg_cal = sum(calories) / len(calories)
-                merged.append([merged_name, round_sig(avg_cal, 3)])
-                i = end
-                continue
+                merged_name = build_merged_name(group_names)
+                if _has_valid_parens(merged_name):
+                    avg_cal = sum(calories) / len(calories)
+                    merged.append([merged_name, round_sig(avg_cal, 3)])
+                    i = end
+                    continue
+                # Otherwise: the common-prefix cut landed awkwardly inside
+                # an existing parenthetical (e.g. from a prior merge pass),
+                # producing a malformed name. Fall through and keep the
+                # block unmerged rather than emit a broken name.
 
         # Block didn't qualify for merging (or has only 1 item): keep every
         # item in it as-is.
@@ -592,11 +648,53 @@ def assert_no_duplicate_names(grouped: dict[str, list[list[Any]]]) -> None:
             seen[name] = cal
 
 
+# Verbose redundant prefixes to strip after merging, replaced with the
+# shorter "1g" unit prefix alone (e.g. "1g Alcoholic beverage, beer, light"
+# -> "1g beer, light"). Longer/more specific prefixes should be listed
+# before shorter ones they contain, though none currently overlap.
+NAME_PREFIX_REPLACEMENTS = [
+    ("1g Alcoholic beverages, ", "1g "),
+    ("1g Alcoholic beverage, ", "1g "),
+    ("1g Beverages,", "1g"),
+    ("1g Snack, ", "1g"),
+    ("1g Candies,", "1g"),
+]
+
+
+def clean_item_name(name: str) -> str:
+    """Post-merge cosmetic cleanup of a template name:
+    1. Strip verbose redundant prefixes (see NAME_PREFIX_REPLACEMENTS).
+    2. Collapse double (or more) spaces into one, and strip leading/
+       trailing whitespace.
+    3. Capitalize the first letter of the first word after the "1g" (or
+       other leading digit+unit) prefix, if it isn't already uppercase --
+       keeps names looking consistent after a prefix like "Beverages, "
+       was removed (e.g. "1g beer, light" -> "1g Beer, light")."""
+    for old, new in NAME_PREFIX_REPLACEMENTS:
+        if name.startswith(old):
+            name = new + name[len(old):]
+            break
+
+    name = re.sub(r" {2,}", " ", name).strip()
+
+    match = re.match(r"^(\d+[A-Za-z]*\s+)?([A-Za-z])(.*)$", name)
+    if match:
+        lead, first_letter, rest = match.groups()
+        lead = lead or ""
+        name = lead + first_letter.upper() + rest
+
+    return name
+
+
 # Successive merge passes to run, each as (prefix_word_count, max_ratio).
 # Later passes use a shorter prefix and a tighter calorie-ratio tolerance,
 # catching broader groups of near-duplicates that survived the earlier,
 # more conservative passes.
 MERGE_PASSES = [
+    (9, 1.6),
+    (8, 1.5),
+    (7, 1.4),
+    (6, 1.3),
     (5, 1.2),
     (4, 1.1),
     (3, 1.05),
@@ -633,6 +731,20 @@ def write_seed_file(items: list[dict[str, Any]]) -> None:
             )
             for category, pairs in ordered.items()
         }
+
+    # Cosmetic cleanup pass: strip verbose redundant prefixes (e.g. "1g
+    # Alcoholic beverage, " -> "1g "), collapse double spaces, and
+    # recapitalize the first word. Done after merging (so merge prefix
+    # matching/common-prefix logic sees the original, fuller names) and
+    # before the duplicate check (since two previously-distinct names could
+    # theoretically collapse to the same cleaned name).
+    ordered = {
+        category: sorted(
+            [[clean_item_name(str(name)), cal] for name, cal in pairs],
+            key=lambda pair: str(pair[0]).lower(),
+        )
+        for category, pairs in ordered.items()
+    }
 
     # Merging must never produce two entries with the exact same name
     # within a category -- that would make them indistinguishable/ambiguous

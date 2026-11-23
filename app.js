@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.19.7",
+    date: "2026-11-24",
+    summary: "Food template seed data is now even more compressed (7796 -> 5495 items, 434 KB). Merged entries now preserve every item's distinguishing detail as '<common part> (<extra 1> OR <extra 2> OR ...)' instead of risking ambiguous/duplicate names.",
+  },
+  {
     version: "1.19.6",
     date: "2026-11-23",
     summary: "Loading overlay now shows the familiar app UI blurred in the background (instead of a blank screen) with the spinner on top, so it's clear the app is there while startup data loads.",
