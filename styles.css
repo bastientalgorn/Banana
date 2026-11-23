@@ -97,6 +97,16 @@ body {
   padding: 0.35rem 0;
 }
 
+.app-version-label {
+  position: absolute;
+  top: -0.05rem;
+  right: 0.2rem;
+  font-size: 0.6rem;
+  color: var(--muted);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
 .tab-button {
   border: 1px solid var(--border);
   background: var(--card);

@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.19.16",
+    date: "2026-11-23",
+    summary: "Added a tiny version number label in the top-right corner, above the Data tab button.",
+  },
+  {
     version: "1.19.15",
     date: "2026-11-23",
     summary: "Editing an existing entry no longer auto-focuses the name field either (same fix as the earlier 'copy entry' change) -- avoids popping the suggestions dropdown open over the form.",
@@ -205,6 +210,7 @@ const ui = {
   appLoadingOverlay: document.getElementById("app-loading-overlay"),
   appLoadingStatus: document.getElementById("app-loading-status"),
   appShell: document.querySelector(".app-shell"),
+  appVersionLabel: document.getElementById("app-version-label"),
   tabButtons: document.querySelectorAll(".tab-button"),
   tabSections: {
     cal: document.getElementById("tab-cal"),
@@ -797,6 +803,10 @@ function switchTab(tabName) {
 }
 
 function renderVersionInfo() {
+  if (ui.appVersionLabel) {
+    ui.appVersionLabel.textContent = `v${APP_VERSION}`;
+  }
+
   ui.changelogList.innerHTML = "";
 
   const recentEntries = APP_CHANGELOG.slice(0, 5);
