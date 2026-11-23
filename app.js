@@ -11,6 +11,21 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.19.5",
+    date: "2026-11-23",
+    summary: "Fixed the food data merge compression producing multiple different entries with the same ambiguous name (e.g. several \"1g Beverages\" with different calories); merges now only happen when an entire group of same-prefix items qualifies together (486 KB).",
+  },
+  {
+    version: "1.19.4",
+    date: "2026-11-23",
+    summary: "Further shrunk the predefined food data file (326 KB, down from 1039 KB originally) by merging near-duplicate entries (e.g. many similar beef/lamb cuts) that share a name prefix and have very close calories, across 4 successive passes.",
+  },
+  {
+    version: "1.19.3",
+    date: "2026-11-23",
+    summary: "Shrunk the predefined food data file by ~45% (1039 KB -> 569 KB) by grouping items by category instead of repeating keys per item, and rounding calories to 3 significant figures.",
+  },
+  {
     version: "1.19.2",
     date: "2026-11-23",
     summary: "Added a full-screen loading overlay on startup so the app isn't interactive (e.g. New entry suggestions, existing entries) until templates and history finish loading from the database.",
@@ -1911,6 +1926,31 @@ async function countCalEntriesForTemplate(templateId) {
   return entries.filter((entry) => entry.templateId === templateId).length;
 }
 
+function getFlatFoodSeeds() {
+  // window.FOOD_TYPE_SEED is grouped by category to avoid repeating keys:
+  // { "Fruit": [["1 apple", 142.928], ...], "Grain": [...] }
+  // Flatten it back into {name, category, calPerUnit} objects for the rest
+  // of the app to consume.
+  const grouped = window.FOOD_TYPE_SEED;
+  if (!grouped || typeof grouped !== "object" || Array.isArray(grouped)) {
+    return [];
+  }
+
+  const flat = [];
+  for (const [category, items] of Object.entries(grouped)) {
+    if (!Array.isArray(items)) {
+      continue;
+    }
+    for (const pair of items) {
+      if (!Array.isArray(pair) || pair.length < 2) {
+        continue;
+      }
+      flat.push({ name: pair[0], category, calPerUnit: pair[1] });
+    }
+  }
+  return flat;
+}
+
 async function ensureSeedData() {
   const existingItems = await listAll(STORE_TEMPLATES);
   const existingNames = new Set(existingItems.map((item) => String(item.name || "").trim().toLowerCase()));
@@ -1921,7 +1961,7 @@ async function ensureSeedData() {
     { name: "1 egg", calPerUnit: 75 },
   ];
 
-  const jsonSeed = Array.isArray(window.FOOD_TYPE_SEED) ? window.FOOD_TYPE_SEED : [];
+  const jsonSeed = getFlatFoodSeeds();
   const seeds = jsonSeed.length > 0 ? jsonSeed : fallbackSeeds;
 
   const recordsToAdd = [];
@@ -1957,7 +1997,7 @@ async function migrateFlagExistingSeedTemplates() {
     { name: "1g Yogurt, plain", calPerUnit: 0.61 },
     { name: "1 egg", calPerUnit: 75 },
   ];
-  const jsonSeed = Array.isArray(window.FOOD_TYPE_SEED) ? window.FOOD_TYPE_SEED : [];
+  const jsonSeed = getFlatFoodSeeds();
   const seeds = jsonSeed.length > 0 ? jsonSeed : fallbackSeeds;
   const seedNames = new Set(seeds.map((seed) => String(seed?.name || "").trim().toLowerCase()));
 
@@ -1990,7 +2030,7 @@ async function pruneStaleSeedTemplates() {
     { name: "1g Yogurt, plain", calPerUnit: 0.61 },
     { name: "1 egg", calPerUnit: 75 },
   ];
-  const jsonSeed = Array.isArray(window.FOOD_TYPE_SEED) ? window.FOOD_TYPE_SEED : [];
+  const jsonSeed = getFlatFoodSeeds();
   const seeds = jsonSeed.length > 0 ? jsonSeed : fallbackSeeds;
   const currentSeedNames = new Set(seeds.map((seed) => String(seed?.name || "").trim().toLowerCase()));
 

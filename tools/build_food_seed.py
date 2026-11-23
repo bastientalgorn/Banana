@@ -8,6 +8,22 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_JSON = ROOT / "FoodData_Central_sr_legacy_food_json_2018-04.json"
 TARGET_JS = ROOT / "food_seed_data.js"
+
+
+def round_sig(value: float, sig: int = 3) -> float:
+    """Round to `sig` significant digits (e.g. 179.445614 -> 179, 15.899 -> 15.9,
+    0.1264894 -> 0.126). Returns an int when the rounded result has no
+    fractional part, so JSON serializes it as `179` instead of `179.0`."""
+    if value == 0:
+        return 0
+
+    import math
+
+    digits = sig - 1 - math.floor(math.log10(abs(value)))
+    rounded = round(value, digits)
+    if rounded == int(rounded):
+        return int(rounded)
+    return rounded
 # No cap on item count or name length: accuracy matters more than trimming,
 # so every distinguishable USDA food gets its own entry with its full
 # description rather than being shortened/merged with unrelated foods.
@@ -410,7 +426,7 @@ def build_seed_data() -> list[dict[str, Any]]:
             {
                 "name": bucket["name"],
                 "category": bucket["category"],
-                "calPerUnit": round(avg_calories, 3),
+                "calPerUnit": round_sig(avg_calories, 3),
             }
         )
 
@@ -418,20 +434,240 @@ def build_seed_data() -> list[dict[str, Any]]:
     return selected
 
 
+# Default number of leading words used to detect groups of near-duplicate
+# entries (e.g. many "Beef, chuck, arm pot roast, ..." cuts) that can be
+# merged into a single representative entry when their calories are close
+# enough. Exposed as a function parameter so the merge can be re-run with
+# different values.
+DEFAULT_MERGE_PREFIX_WORDS = 5
+# Default max allowed ratio between min/max calories within a candidate merge
+# group (e.g. 1.2 == max is at most 20% higher than min). Also a parameter.
+DEFAULT_MERGE_MAX_RATIO = 1.2
+
+
+def _first_n_words_prefix(name: str, n: int) -> str | None:
+    """Return the substring of `name` covering its first `n` words, or None
+    if `name` has fewer than `n` words."""
+    matches = list(re.finditer(r"[A-Za-z]+", name))
+    if len(matches) < n:
+        return None
+    return name[: matches[n - 1].end()]
+
+
+def _longest_common_prefix(strings: list[str]) -> str:
+    if not strings:
+        return ""
+    s1 = min(strings)
+    s2 = max(strings)
+    i = 0
+    while i < len(s1) and i < len(s2) and s1[i] == s2[i]:
+        i += 1
+    return s1[:i]
+
+
+def _trim_to_clean_boundary(prefix: str, names: list[str]) -> str:
+    """Trim a longest-common-prefix string back to a clean boundary: never
+    cut in the middle of a word, and never leave trailing
+    comma/whitespace/other punctuation dangling. Also balances any unclosed
+    '('. `names` is the full set of names the prefix was derived from, used
+    to tell whether the prefix actually ends at a real word boundary (i.e.
+    every name either ends exactly there or continues with a non-word
+    character) versus mid-word (at least one name continues the same word).
+    """
+    trimmed = prefix
+
+    def ends_mid_word(candidate: str) -> bool:
+        length = len(candidate)
+        if not candidate or not re.match(r"[A-Za-z0-9]$", candidate[-1]):
+            return False
+        for name in names:
+            if len(name) > length and re.match(r"[A-Za-z0-9]", name[length]):
+                return True
+        return False
+
+    def strip_trailing_punct(candidate: str) -> str:
+        candidate = candidate.rstrip()
+        while candidate and candidate[-1] in ",;:.-":
+            candidate = candidate[:-1].rstrip()
+        return candidate
+
+    trimmed = strip_trailing_punct(trimmed)
+
+    # Keep dropping the trailing (partial) word while the prefix cuts
+    # through the middle of a word that some name in the group continues.
+    while trimmed and ends_mid_word(trimmed):
+        match = re.search(r"[A-Za-z0-9]+$", trimmed)
+        if not match:
+            break
+        before_word = trimmed[: match.start()]
+        trimmed = strip_trailing_punct(before_word)
+
+    return _balance_parentheses(trimmed)
+
+
+def _balance_parentheses(name: str) -> str:
+    """If truncating a name left an unclosed '(' open, close it."""
+    depth = 0
+    for ch in name:
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth = max(depth - 1, 0)
+    if depth > 0:
+        name = name + ")" * depth
+    return name
+
+
+def merge_similar_items(
+    pairs: list[list[Any]],
+    n: int = DEFAULT_MERGE_PREFIX_WORDS,
+    max_ratio: float = DEFAULT_MERGE_MAX_RATIO,
+) -> list[list[Any]]:
+    """Within a single category's alphabetically-sorted [name, cal] pairs,
+    find each full contiguous block of items that share the same first `n`
+    words (since pairs are alphabetically sorted, all items sharing that
+    prefix are already contiguous). For each whole block, check the
+    min/max calorie ratio across ALL items in the block: if it satisfies
+    `max_ratio`, merge the whole block into one representative entry (name =
+    longest common prefix across the block, trimmed to a clean
+    word/punctuation boundary; calories = average). If the block's ratio
+    does not qualify, leave every item in the block unmerged/untouched --
+    we do NOT merge a partial sub-run, to avoid producing multiple separate
+    merged entries that collapse to the same (ambiguous) name."""
+    merged: list[list[Any]] = []
+    length = len(pairs)
+    i = 0
+    while i < length:
+        name_i, _ = pairs[i]
+        prefix = _first_n_words_prefix(name_i, n)
+        if prefix is None:
+            merged.append(pairs[i])
+            i += 1
+            continue
+
+        # Find the full contiguous block sharing this prefix.
+        end = i + 1
+        while end < length and str(pairs[end][0]).startswith(prefix):
+            end += 1
+        block = pairs[i:end]
+
+        if len(block) > 1:
+            calories = [b[1] for b in block]
+            block_min = min(calories)
+            block_max = max(calories)
+            if block_min > 0 and block_max < max_ratio * block_min:
+                group_names = [str(b[0]) for b in block]
+                common_prefix = _longest_common_prefix(group_names)
+                merged_name = _trim_to_clean_boundary(common_prefix, group_names)
+                if not merged_name:
+                    # Fallback: shouldn't normally happen since all names
+                    # share at least `prefix`, but guard against an empty
+                    # result.
+                    merged_name = _trim_to_clean_boundary(prefix, group_names) or prefix
+                avg_cal = sum(calories) / len(calories)
+                merged.append([merged_name, round_sig(avg_cal, 3)])
+                i = end
+                continue
+
+        # Block didn't qualify for merging (or has only 1 item): keep every
+        # item in it as-is.
+        merged.extend(block)
+        i = end
+
+    return merged
+
+
+def assert_no_duplicate_names(grouped: dict[str, list[list[Any]]]) -> None:
+    """Raise if any category ends up with two entries sharing the exact same
+    name -- that would make them indistinguishable in the app's suggestion
+    list and silently shadow one another."""
+    for category, pairs in grouped.items():
+        seen: dict[str, float] = {}
+        for name, cal in pairs:
+            if name in seen:
+                raise ValueError(
+                    f"Duplicate template name produced in category {category!r}: "
+                    f"{name!r} (calories {seen[name]!r} and {cal!r})"
+                )
+            seen[name] = cal
+
+
+# Successive merge passes to run, each as (prefix_word_count, max_ratio).
+# Later passes use a shorter prefix and a tighter calorie-ratio tolerance,
+# catching broader groups of near-duplicates that survived the earlier,
+# more conservative passes.
+MERGE_PASSES = [
+    (5, 1.2),
+    (4, 1.1),
+    (3, 1.05),
+    (2, 1.03),
+]
+
+
 def write_seed_file(items: list[dict[str, Any]]) -> None:
-    content = (
-        "window.FOOD_TYPE_SEED = "
-        + json.dumps(items, ensure_ascii=False, indent=2)
-        + ";\n"
-    )
-    TARGET_JS.write_text(content, encoding="utf-8")
+    # Group by category and store each item as a compact [name, calPerUnit]
+    # pair instead of a {"name":..., "category":..., "calPerUnit":...} object.
+    # With ~7800 items, repeating the three key names (and the category
+    # string) in every entry made up roughly half the file size; grouping by
+    # category and dropping to positional pairs removes that repetition.
+    grouped: dict[str, list[list[Any]]] = {}
+    for item in items:
+        category = str(item.get("category") or "Other")
+        grouped.setdefault(category, []).append([item["name"], item["calPerUnit"]])
+
+    # Sort categories alphabetically, and items within each category
+    # alphabetically, for stable/diffable output.
+    ordered = {category: grouped[category] for category in sorted(grouped)}
+
+    # Further compress: run several merge passes (see MERGE_PASSES), each
+    # merging runs of near-duplicate entries (same first N words, calories
+    # within the given ratio of each other) within each category into one
+    # representative entry. Re-sort between passes since merged names can
+    # shift alphabetical order, which the next pass's prefix matching
+    # depends on.
+    for prefix_words, max_ratio in MERGE_PASSES:
+        ordered = {
+            category: sorted(
+                merge_similar_items(pairs, n=prefix_words, max_ratio=max_ratio),
+                key=lambda pair: str(pair[0]).lower(),
+            )
+            for category, pairs in ordered.items()
+        }
+
+    # Merging must never produce two entries with the exact same name
+    # within a category -- that would make them indistinguishable/ambiguous
+    # in the app. Fail loudly if it ever happens instead of shipping broken
+    # data silently.
+    assert_no_duplicate_names(ordered)
+
+    # Render each [name, cal] pair on a single line (rather than json.dumps'
+    # default of spreading nested arrays across multiple indented lines) to
+    # further shrink the file -- whitespace/indentation otherwise adds up
+    # considerably across ~7800 entries.
+    lines = ["window.FOOD_TYPE_SEED = {"]
+    categories = list(ordered.items())
+    for category_index, (category, pairs) in enumerate(categories):
+        lines.append(f"  {json.dumps(category, ensure_ascii=False)}: [")
+        for pair_index, pair in enumerate(pairs):
+            comma = "," if pair_index < len(pairs) - 1 else ""
+            lines.append(f"    {json.dumps(pair, ensure_ascii=False)}{comma}")
+        closing_comma = "," if category_index < len(categories) - 1 else ""
+        lines.append(f"  ]{closing_comma}")
+    lines.append("};")
+
+    TARGET_JS.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return sum(len(pairs) for pairs in ordered.values())
 
 
 def main() -> int:
     items = build_seed_data()
-    write_seed_file(items)
+    try:
+        final_count = write_seed_file(items)
+    except ValueError as error:
+        print(f"ERROR: {error}")
+        return 1
     size_kb = TARGET_JS.stat().st_size / 1024
-    print(f"Generated {len(items)} seed items at {TARGET_JS} ({size_kb:.1f} KB)")
+    print(f"Generated {final_count} seed items (from {len(items)} before merging) at {TARGET_JS} ({size_kb:.1f} KB)")
     return 0
 
 
