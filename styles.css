@@ -234,14 +234,21 @@ h3 {
 
 .input-clear-button {
   position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 2.4rem;
+  top: 50%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+  margin: 0;
+  width: 28px;
+  min-width: 28px;
+  height: 25px;
+  min-height: 25px;
+  padding: 0;
   border: none;
-  background: transparent;
-  color: var(--muted);
-  font-size: 1rem;
+  border-radius: 999px;
+  background: var(--accent-2);
+  color: #081018;
+  font-weight: 700;
+  font-size: 0.85rem;
   line-height: 1;
   cursor: pointer;
   display: flex;
@@ -251,11 +258,13 @@ h3 {
 
 .input-clear-button:hover,
 .input-clear-button:focus {
-  color: var(--text);
+  background: var(--accent-2);
+  color: #081018;
+  filter: brightness(1.1);
 }
 
 .autocomplete-wrap input[type="text"] {
-  padding-right: 2.4rem;
+  padding-right: 2.6rem;
 }
 
 .autocomplete-dropdown {

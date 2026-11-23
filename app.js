@@ -11,6 +11,16 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.19.14",
+    date: "2026-11-23",
+    summary: "Pressing Enter in the entry name field now closes the suggestions dropdown and moves focus to 'Calory per item', instead of just selecting a highlighted suggestion.",
+  },
+  {
+    version: "1.19.13",
+    date: "2026-11-23",
+    summary: "Fixed: the name suggestions dropdown now always closes when you move focus away from the name field (e.g. via Tab to the next field), not just when clicking outside it.",
+  },
+  {
     version: "1.19.12",
     date: "2026-11-23",
     summary: "Copying an entry no longer auto-focuses (and pops open suggestions over) the name field -- only a brand-new entry does. Added a small \u2715 clear button inside the entry name field.",
@@ -363,6 +373,17 @@ function bindUiEvents() {
     updateCalTemplateDropdown();
   });
 
+  ui.calTemplateText.addEventListener("blur", () => {
+    // Delay hiding so a click on a dropdown item (which blurs the input
+    // just before its own click handler runs) still gets to register.
+    // Without this, moving focus away via Tab/clicking another field
+    // (not just an outside pointerdown) would otherwise leave the
+    // suggestions list open and covering the rest of the form.
+    window.setTimeout(() => {
+      hideCalTemplateDropdown();
+    }, 150);
+  });
+
   if (ui.calTemplateClearBtn) {
     ui.calTemplateClearBtn.addEventListener("click", async () => {
       ui.calTemplateText.value = "";
@@ -383,7 +404,19 @@ function bindUiEvents() {
   });
 
   ui.calTemplateText.addEventListener("keydown", (event) => {
-    if (ui.calTemplateDropdown.classList.contains("hidden")) {
+    const dropdownOpen = !ui.calTemplateDropdown.classList.contains("hidden");
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      if (dropdownOpen && state.calDropdownActiveIndex >= 0) {
+        selectCalTemplateDropdownItem(state.calDropdownActiveIndex);
+      }
+      hideCalTemplateDropdown();
+      ui.calItemCal.focus();
+      return;
+    }
+
+    if (!dropdownOpen) {
       return;
     }
     if (event.key === "ArrowDown") {
@@ -392,11 +425,6 @@ function bindUiEvents() {
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
       moveCalTemplateDropdownSelection(-1);
-    } else if (event.key === "Enter") {
-      if (state.calDropdownActiveIndex >= 0) {
-        event.preventDefault();
-        selectCalTemplateDropdownItem(state.calDropdownActiveIndex);
-      }
     } else if (event.key === "Escape") {
       hideCalTemplateDropdown();
     }
