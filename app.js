@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.19.25",
+    date: "2026-11-23",
+    summary: "Banana is now a Progressive Web App (PWA): it can be installed on your device's home screen and works offline, thanks to a new web app manifest and service worker that cache the app's files.",
+  },
+  {
     version: "1.19.24",
     date: "2026-11-23",
     summary: "Removed template auto-merging by name entirely: templates are never combined just because they share a name (seed templates are already guaranteed unique names upstream, and user-created templates like 'Pizza' at 500 cal and 'Pizza' at 800 cal should both be allowed to exist). Cleanup now only handles renaming/deleting known-bad entries.",
