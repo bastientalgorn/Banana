@@ -11,6 +11,16 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.19.23",
+    date: "2026-11-23",
+    summary: "The calorie total in the entry list now also shrinks its font size automatically for long numbers, just like the quantity.",
+  },
+  {
+    version: "1.19.22",
+    date: "2026-11-23",
+    summary: "Removed the 'x' next to the quantity in the entry list, and the quantity number now shrinks its font size automatically so large values (e.g. 10000) still fit.",
+  },
+  {
     version: "1.19.21",
     date: "2026-11-23",
     summary: "The quantity +/- buttons now round the current quantity to the nearest whole number first, then add or subtract 1 (e.g. '1/6' pressed '+' becomes '1', not a fractional increment).",
@@ -1159,12 +1169,11 @@ async function refreshCalView() {
     quantityNode.className = "cal-col cal-col-qty";
     const quantityValueNode = document.createElement("span");
     quantityValueNode.className = "cal-qty-value";
-    quantityValueNode.textContent = String(entry.quantity);
-    const quantityXNode = document.createElement("span");
-    quantityXNode.className = "cal-qty-x";
-    quantityXNode.textContent = "x";
+    const quantityText = String(entry.quantity);
+    quantityValueNode.textContent = quantityText;
+    const qtyFontScale = Math.min(1, 4.2 / Math.max(quantityText.length, 1));
+    quantityValueNode.style.fontSize = `${Math.max(0.6, qtyFontScale)}em`;
     quantityNode.appendChild(quantityValueNode);
-    quantityNode.appendChild(quantityXNode);
 
     const nameNode = document.createElement("span");
     nameNode.className = "cal-col cal-col-name";
@@ -1178,7 +1187,10 @@ async function refreshCalView() {
 
     const totalNode = document.createElement("span");
     totalNode.className = "cal-col cal-col-total";
-    totalNode.textContent = `${Math.round(lineTotal)}`;
+    const totalText = `${Math.round(lineTotal)}`;
+    totalNode.textContent = totalText;
+    const totalFontScale = Math.min(1, 4.2 / Math.max(totalText.length, 1));
+    totalNode.style.fontSize = `${Math.max(0.6, totalFontScale)}em`;
 
     const timeNode = document.createElement("span");
     timeNode.className = "cal-col cal-col-time";

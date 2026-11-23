@@ -584,18 +584,14 @@ button.danger {
 }
 
 .cal-col-qty {
-  display: grid;
-  grid-template-columns: 1fr 14px;
+  display: flex;
   align-items: center;
-  gap: 0.25rem;
+  justify-content: flex-end;
 }
 
 .cal-qty-value {
   text-align: right;
-}
-
-.cal-qty-x {
-  text-align: center;
+  white-space: nowrap;
 }
 
 .cal-col-total,
