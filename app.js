@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.19.2",
+    date: "2026-11-23",
+    summary: "Added a full-screen loading overlay on startup so the app isn't interactive (e.g. New entry suggestions, existing entries) until templates and history finish loading from the database.",
+  },
+  {
     version: "1.19.1",
     date: "2026-11-23",
     summary: "Fixed the Type field's suggestion dropdown not appearing/staying open on mobile (Android Chrome) by closing it on outside-tap instead of relying on blur+mousedown timing.",
@@ -132,6 +137,7 @@ const state = {
 };
 
 const ui = {
+  appLoadingOverlay: document.getElementById("app-loading-overlay"),
   tabButtons: document.querySelectorAll(".tab-button"),
   tabSections: {
     cal: document.getElementById("tab-cal"),
@@ -212,25 +218,36 @@ const ui = {
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
-  bindUiEvents();
-  buildColorSwatches(ui.calColorPickerRow);
-  buildColorSwatches(ui.templateEditColorPickerRow);
-  renderVersionInfo();
-  state.db = await openDatabase();
-  await ensureDefaultSettings();
-  await migrateLegacy100gTemplates();
-  await ensureSeedData();
-  await migrateFlagExistingSeedTemplates();
-  await pruneStaleSeedTemplates();
-  await simplifyAndPruneTemplates();
-  state.templates = await listTemplates();
-  ui.weightTodayDate.value = state.selectedDate;
+  try {
+    bindUiEvents();
+    buildColorSwatches(ui.calColorPickerRow);
+    buildColorSwatches(ui.templateEditColorPickerRow);
+    renderVersionInfo();
+    state.db = await openDatabase();
+    await ensureDefaultSettings();
+    await migrateLegacy100gTemplates();
+    await ensureSeedData();
+    await migrateFlagExistingSeedTemplates();
+    await pruneStaleSeedTemplates();
+    await simplifyAndPruneTemplates();
+    state.templates = await listTemplates();
+    ui.weightTodayDate.value = state.selectedDate;
 
-  await refreshTemplateUsage();
-  await refreshCalView();
-  await refreshWeightView();
-  await refreshDataView();
-  await loadTargetsIntoForm();
+    await refreshTemplateUsage();
+    await refreshCalView();
+    await refreshWeightView();
+    await refreshDataView();
+    await loadTargetsIntoForm();
+
+    if (ui.appLoadingOverlay) {
+      ui.appLoadingOverlay.classList.add("hidden");
+    }
+  } catch (error) {
+    console.error("Initial app load failed", error);
+    if (ui.appLoadingOverlay) {
+      ui.appLoadingOverlay.innerHTML = "<p>Failed to load app data. Please reload the page.</p>";
+    }
+  }
 });
 
 function bindUiEvents() {

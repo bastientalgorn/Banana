@@ -6,9 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Banana Tracker</title>
   <link rel="icon" type="image/png" sizes="16x16" href="banana_icon_16.png" />
-  <link rel="stylesheet" href="styles.css?v=20261123a" />
+  <link rel="stylesheet" href="styles.css?v=20261123b" />
 </head>
 <body>
+  <div id="app-loading-overlay" class="app-loading-overlay">
+    <div class="app-loading-spinner" aria-hidden="true"></div>
+    <p>Loading...</p>
+  </div>
   <div class="app-shell">
     <header class="top-nav" aria-label="Main navigation">
       <button class="tab-button active" data-tab="cal" type="button">Track</button>
@@ -209,6 +213,6 @@
   </div>
 
   <script src="food_seed_data.js?v=20261122c" type="application/javascript"></script>
-  <script src="app.js?v=20261123b" type="application/javascript"></script>
+  <script src="app.js?v=20261123c" type="application/javascript"></script>
 </body>
 </html>
