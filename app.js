@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.19.8",
+    date: "2026-11-23",
+    summary: "Removed the unused 'Trim Templates list by word count' maintenance option. The loading overlay now shows live status text describing what's being loaded (and a summary count once each step finishes) instead of just a spinner.",
+  },
+  {
     version: "1.19.7",
     date: "2026-11-24",
     summary: "Food template seed data is now even more compressed (7796 -> 5495 items, 434 KB). Merged entries now preserve every item's distinguishing detail as '<common part> (<extra 1> OR <extra 2> OR ...)' instead of risking ambiguous/duplicate names.",
@@ -163,6 +168,7 @@ const state = {
 
 const ui = {
   appLoadingOverlay: document.getElementById("app-loading-overlay"),
+  appLoadingStatus: document.getElementById("app-loading-status"),
   appShell: document.querySelector(".app-shell"),
   tabButtons: document.querySelectorAll(".tab-button"),
   tabSections: {
@@ -219,7 +225,6 @@ const ui = {
   dailyCalorieTarget: document.getElementById("daily-calorie-target"),
   weightTarget: document.getElementById("weight-target"),
   templateSearch: document.getElementById("template-search"),
-  templateMaxWords: document.getElementById("template-max-words"),
   templateList: document.getElementById("template-list"),
   templateModal: document.getElementById("template-modal"),
   templateModalBackdrop: document.getElementById("template-modal-backdrop"),
@@ -243,28 +248,65 @@ const ui = {
   listTemplate: document.getElementById("simple-list-item-template"),
 };
 
+function setLoadingStatus(message) {
+  if (ui.appLoadingStatus) {
+    ui.appLoadingStatus.textContent = message;
+  }
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   try {
     bindUiEvents();
     buildColorSwatches(ui.calColorPickerRow);
     buildColorSwatches(ui.templateEditColorPickerRow);
     renderVersionInfo();
+
+    setLoadingStatus("Opening database...");
     state.db = await openDatabase();
+
+    setLoadingStatus("Checking settings...");
     await ensureDefaultSettings();
+
+    setLoadingStatus("Migrating legacy templates...");
     await migrateLegacy100gTemplates();
-    await ensureSeedData();
-    await migrateFlagExistingSeedTemplates();
-    await pruneStaleSeedTemplates();
-    await simplifyAndPruneTemplates();
+
+    setLoadingStatus("Loading food template seed data...");
+    const addedSeedCount = await ensureSeedData();
+    setLoadingStatus(`Loaded ${addedSeedCount} new food templates.`);
+
+    setLoadingStatus("Flagging seed templates...");
+    const flaggedCount = await migrateFlagExistingSeedTemplates();
+    setLoadingStatus(`Flagged ${flaggedCount} templates as seed data.`);
+
+    setLoadingStatus("Pruning stale seed templates...");
+    const staleCount = await pruneStaleSeedTemplates();
+    setLoadingStatus(`Cleaned up ${staleCount} stale seed templates.`);
+
+    setLoadingStatus("Simplifying templates...");
+    const mergedCount = await simplifyAndPruneTemplates();
+    setLoadingStatus(`Merged ${mergedCount} duplicate templates.`);
+
+    setLoadingStatus("Loading templates...");
     state.templates = await listTemplates();
     ui.weightTodayDate.value = state.selectedDate;
+    setLoadingStatus(`Loaded ${state.templates.length} templates.`);
 
+    setLoadingStatus("Loading template usage...");
     await refreshTemplateUsage();
+
+    setLoadingStatus("Loading today's entries...");
     await refreshCalView();
+
+    setLoadingStatus("Loading weight history...");
     await refreshWeightView();
+
+    setLoadingStatus("Loading data tab...");
     await refreshDataView();
+
+    setLoadingStatus("Loading targets...");
     await loadTargetsIntoForm();
 
+    setLoadingStatus("Done.");
     if (ui.appLoadingOverlay) {
       ui.appLoadingOverlay.classList.add("hidden");
     }
@@ -329,12 +371,6 @@ function bindUiEvents() {
       hideCalTemplateDropdown();
     }
   });
-
-  if (ui.templateMaxWords) {
-    ui.templateMaxWords.addEventListener("input", async () => {
-      await refreshDataView();
-    });
-  }
 
   ui.calItemCal.addEventListener("input", () => {
     refreshCalModalComputedFields();
@@ -829,11 +865,6 @@ async function refreshTemplateUsage() {
   state.templateUsage = usage;
 }
 
-function countNameWords(name) {
-  const matches = String(name || "").match(/[A-Za-z]+/g);
-  return matches ? matches.length : 0;
-}
-
 function stripLeadingUnitPrefix(name) {
   // Strips a leading "1g " or "1 " unit-count prefix used by generated seed
   // names, so "starts with S" matching feels natural (e.g. typing "egg"
@@ -1221,23 +1252,17 @@ async function refreshDataView() {
   ui.templateList.innerHTML = "";
   const query = String(ui.templateSearch.value || "").trim().toLowerCase();
   const searchWords = splitSearchWords(query);
-  const maxWordsRaw = ui.templateMaxWords ? Number(ui.templateMaxWords.value) : NaN;
-  const maxWords = Number.isInteger(maxWordsRaw) && maxWordsRaw > 0 ? maxWordsRaw : null;
 
-  let filteredTemplates = query
+  const filteredTemplates = query
     ? state.templates.filter((template) => nameMatchesAllWords(String(template.name || "").toLowerCase(), searchWords))
     : state.templates;
 
-  if (maxWords !== null) {
-    filteredTemplates = filteredTemplates.filter((template) => countNameWords(template.name) < maxWords);
-  }
-
   // With thousands of seeded templates now available, rendering the full
   // unfiltered list into the DOM would be slow and overwhelming. Require a
-  // search term (or a word-count trim) once the list grows large;
-  // small/custom lists still show everything by default like before.
+  // search term once the list grows large; small/custom lists still show
+  // everything by default like before.
   const UNFILTERED_DISPLAY_LIMIT = 150;
-  if (!query && maxWords === null && state.templates.length > UNFILTERED_DISPLAY_LIMIT) {
+  if (!query && state.templates.length > UNFILTERED_DISPLAY_LIMIT) {
     const promptNode = document.createElement("li");
     promptNode.className = "list-item";
     promptNode.textContent = `Type to search ${state.templates.length} templates...`;
@@ -2003,6 +2028,7 @@ async function ensureSeedData() {
   if (recordsToAdd.length > 0) {
     await bulkAddRecords(STORE_TEMPLATES, recordsToAdd);
   }
+  return recordsToAdd.length;
 }
 
 async function migrateFlagExistingSeedTemplates() {
@@ -2016,6 +2042,7 @@ async function migrateFlagExistingSeedTemplates() {
   const seedNames = new Set(seeds.map((seed) => String(seed?.name || "").trim().toLowerCase()));
 
   const existingItems = await listAll(STORE_TEMPLATES);
+  let flaggedCount = 0;
   for (const item of existingItems) {
     if (item.isSeed) {
       continue;
@@ -2028,7 +2055,9 @@ async function migrateFlagExistingSeedTemplates() {
       ...item,
       isSeed: true,
     });
+    flaggedCount += 1;
   }
+  return flaggedCount;
 }
 
 async function pruneStaleSeedTemplates() {
@@ -2049,6 +2078,7 @@ async function pruneStaleSeedTemplates() {
   const currentSeedNames = new Set(seeds.map((seed) => String(seed?.name || "").trim().toLowerCase()));
 
   const existingItems = await listAll(STORE_TEMPLATES);
+  let staleCount = 0;
   for (const item of existingItems) {
     if (!item.isSeed) {
       continue;
@@ -2058,6 +2088,7 @@ async function pruneStaleSeedTemplates() {
       continue;
     }
 
+    staleCount += 1;
     const usages = await countCalEntriesForTemplate(item.id);
     if (usages > 0) {
       await updateRecord(STORE_TEMPLATES, {
@@ -2068,6 +2099,7 @@ async function pruneStaleSeedTemplates() {
       await deleteRecord(STORE_TEMPLATES, item.id);
     }
   }
+  return staleCount;
 }
 
 async function migrateLegacy100gTemplates() {
@@ -2205,6 +2237,7 @@ async function simplifyAndPruneTemplates() {
   for (const typeId of idsToDelete) {
     await deleteRecord(STORE_TEMPLATES, typeId);
   }
+  return idsToDelete.size;
 }
 
 function simplifyTemplateName(rawName) {
