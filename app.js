@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.19.15",
+    date: "2026-11-23",
+    summary: "Editing an existing entry no longer auto-focuses the name field either (same fix as the earlier 'copy entry' change) -- avoids popping the suggestions dropdown open over the form.",
+  },
+  {
     version: "1.19.14",
     date: "2026-11-23",
     summary: "Pressing Enter in the entry name field now closes the suggestions dropdown and moves focus to 'Calory per item', instead of just selecting a highlighted suggestion.",
@@ -1510,7 +1515,12 @@ function openCalEntryModalForEdit(entry) {
   refreshCalModalComputedFields();
   ui.calEntryModal.classList.remove("hidden");
   updateBodyModalState();
-  ui.calTemplateText.focus();
+  // Don't auto-focus the name field here -- it's already filled in, and
+  // focusing it would pop open the suggestions dropdown over the rest of
+  // the form (same reasoning as the "copy entry" case).
+  if (document.activeElement && typeof document.activeElement.blur === "function") {
+    document.activeElement.blur();
+  }
 }
 
 function closeCalEntryModal() {
