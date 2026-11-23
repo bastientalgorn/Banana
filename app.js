@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.19.9",
+    date: "2026-11-23",
+    summary: "Sped up startup: 'Simplifying templates' now skips writing a template back to the database when nothing actually changed, and skips scanning calorie log entries entirely when there's nothing to merge -- avoids thousands of needless IndexedDB writes on every load.",
+  },
+  {
     version: "1.19.8",
     date: "2026-11-23",
     summary: "Removed the unused 'Trim Templates list by word count' maintenance option. The loading overlay now shows live status text describing what's being loaded (and a summary count once each step finishes) instead of just a spinner.",
@@ -2198,23 +2203,28 @@ async function simplifyAndPruneTemplates() {
     caloriesByKeeperId.get(existingKeeper).push(Number.isFinite(calories) ? calories : 0);
   }
 
-  const allEntries = await listAll(STORE_CAL_ENTRIES);
-  for (const entry of allEntries) {
-    if (!targetBySourceId.has(entry.templateId)) {
-      continue;
-    }
+  // Only bother touching cal entries if some template is actually being
+  // merged/deleted -- avoids loading the entire (potentially large) cal
+  // entries store on every load when there's nothing to re-point.
+  if (idsToDelete.size > 0) {
+    const allEntries = await listAll(STORE_CAL_ENTRIES);
+    for (const entry of allEntries) {
+      if (!targetBySourceId.has(entry.templateId)) {
+        continue;
+      }
 
-    const targetId = targetBySourceId.get(entry.templateId);
-    if (targetId === null) {
-      await deleteRecord(STORE_CAL_ENTRIES, entry.id);
-      continue;
-    }
+      const targetId = targetBySourceId.get(entry.templateId);
+      if (targetId === null) {
+        await deleteRecord(STORE_CAL_ENTRIES, entry.id);
+        continue;
+      }
 
-    if (targetId !== entry.templateId) {
-      await updateRecord(STORE_CAL_ENTRIES, {
-        ...entry,
-        templateId: targetId,
-      });
+      if (targetId !== entry.templateId) {
+        await updateRecord(STORE_CAL_ENTRIES, {
+          ...entry,
+          templateId: targetId,
+        });
+      }
     }
   }
 
@@ -2226,11 +2236,21 @@ async function simplifyAndPruneTemplates() {
     const renamed = idsToRename.get(template.id) || String(template.name || "").trim();
     const cals = caloriesByKeeperId.get(template.id) || [Number(template.calPerUnit) || 0];
     const avgCalories = cals.length > 0 ? cals.reduce((sum, value) => sum + value, 0) / cals.length : Number(template.calPerUnit) || 0;
+    const roundedCalories = roundTo(avgCalories, 3);
+
+    // Skip the write entirely if nothing actually changed -- with
+    // thousands of already-simplified seed templates, this avoids one
+    // IndexedDB write transaction per template on every single load.
+    const nameUnchanged = renamed === String(template.name || "").trim();
+    const caloriesUnchanged = roundedCalories === Number(template.calPerUnit);
+    if (nameUnchanged && caloriesUnchanged) {
+      continue;
+    }
 
     await updateRecord(STORE_TEMPLATES, {
       ...template,
       name: renamed,
-      calPerUnit: roundTo(avgCalories, 3),
+      calPerUnit: roundedCalories,
     });
   }
 
