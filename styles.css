@@ -41,12 +41,18 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.8rem;
-  background: var(--bg);
-  color: var(--muted);
+  background: rgba(13, 17, 23, 0.35);
+  color: var(--text);
 }
 
 .app-loading-overlay.hidden {
   display: none;
+}
+
+.app-shell.app-loading {
+  filter: blur(4px);
+  pointer-events: none;
+  user-select: none;
 }
 
 .app-loading-spinner {

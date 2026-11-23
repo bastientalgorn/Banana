@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.19.6",
+    date: "2026-11-23",
+    summary: "Loading overlay now shows the familiar app UI blurred in the background (instead of a blank screen) with the spinner on top, so it's clear the app is there while startup data loads.",
+  },
+  {
     version: "1.19.5",
     date: "2026-11-23",
     summary: "Fixed the food data merge compression producing multiple different entries with the same ambiguous name (e.g. several \"1g Beverages\" with different calories); merges now only happen when an entire group of same-prefix items qualifies together (486 KB).",
@@ -153,6 +158,7 @@ const state = {
 
 const ui = {
   appLoadingOverlay: document.getElementById("app-loading-overlay"),
+  appShell: document.querySelector(".app-shell"),
   tabButtons: document.querySelectorAll(".tab-button"),
   tabSections: {
     cal: document.getElementById("tab-cal"),
@@ -256,6 +262,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (ui.appLoadingOverlay) {
       ui.appLoadingOverlay.classList.add("hidden");
+    }
+    if (ui.appShell) {
+      ui.appShell.classList.remove("app-loading");
     }
   } catch (error) {
     console.error("Initial app load failed", error);
