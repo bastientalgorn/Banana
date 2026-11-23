@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.19.1",
+    date: "2026-11-23",
+    summary: "Fixed the Type field's suggestion dropdown not appearing/staying open on mobile (Android Chrome) by closing it on outside-tap instead of relying on blur+mousedown timing.",
+  },
+  {
     version: "1.19.0",
     date: "2026-11-23",
     summary: "New entry \"Type\" field now has a custom dropdown (works on mobile): shows previously-used matches first, then names starting with your text, then other matches by increasing name length. Data tab Maintenance now has a \"fewer than N words\" filter to trim the Templates list.",
@@ -249,9 +254,14 @@ function bindUiEvents() {
     updateCalTemplateDropdown();
   });
 
-  ui.calTemplateText.addEventListener("blur", () => {
-    // Delay so a dropdown item's mousedown handler can still fire first.
-    setTimeout(() => hideCalTemplateDropdown(), 150);
+  document.addEventListener("pointerdown", (event) => {
+    if (ui.calTemplateDropdown.classList.contains("hidden")) {
+      return;
+    }
+    const wrap = ui.calTemplateText.closest(".autocomplete-wrap");
+    if (wrap && !wrap.contains(event.target)) {
+      hideCalTemplateDropdown();
+    }
   });
 
   ui.calTemplateText.addEventListener("keydown", (event) => {
@@ -785,9 +795,22 @@ function stripLeadingUnitPrefix(name) {
   return String(name || "").replace(/^1g?\s+/i, "");
 }
 
+function splitSearchWords(query) {
+  return String(query || "")
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((word) => word.length > 0);
+}
+
+function nameMatchesAllWords(lowerName, words) {
+  return words.every((word) => lowerName.includes(word));
+}
+
 function buildCalTemplateSuggestions(query) {
   const trimmedQuery = String(query || "").trim().toLowerCase();
-  if (!trimmedQuery) {
+  const searchWords = splitSearchWords(query);
+  if (searchWords.length === 0) {
     return [];
   }
 
@@ -799,7 +822,7 @@ function buildCalTemplateSuggestions(query) {
   for (const template of state.templates) {
     const name = String(template.name || "");
     const lowerName = name.toLowerCase();
-    if (!lowerName.includes(trimmedQuery)) {
+    if (!nameMatchesAllWords(lowerName, searchWords)) {
       continue;
     }
 
@@ -859,9 +882,7 @@ function renderCalTemplateDropdown(suggestions) {
     const item = document.createElement("div");
     item.className = "autocomplete-item";
     item.textContent = `${template.name} (${formatCal(template.calPerUnit)} kcal)`;
-    item.addEventListener("mousedown", (event) => {
-      // mousedown fires before the input's blur handler hides the dropdown.
-      event.preventDefault();
+    item.addEventListener("click", () => {
       selectCalTemplateDropdownItem(index);
     });
     ui.calTemplateDropdown.appendChild(item);
@@ -1153,11 +1174,12 @@ function drawWeightChart(records, targetWeight) {
 async function refreshDataView() {
   ui.templateList.innerHTML = "";
   const query = String(ui.templateSearch.value || "").trim().toLowerCase();
+  const searchWords = splitSearchWords(query);
   const maxWordsRaw = ui.templateMaxWords ? Number(ui.templateMaxWords.value) : NaN;
   const maxWords = Number.isInteger(maxWordsRaw) && maxWordsRaw > 0 ? maxWordsRaw : null;
 
   let filteredTemplates = query
-    ? state.templates.filter((template) => String(template.name || "").toLowerCase().includes(query))
+    ? state.templates.filter((template) => nameMatchesAllWords(String(template.name || "").toLowerCase(), searchWords))
     : state.templates;
 
   if (maxWords !== null) {
