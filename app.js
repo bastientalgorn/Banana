@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.20.6",
+    date: "2026-11-24",
+    summary: "Fixed the banana icon's vertical centering (it was sitting too low) and made the banana artwork bigger.",
+  },
+  {
     version: "1.20.5",
     date: "2026-11-24",
     summary: "Moved the 'Advanced' box between Targets and Create Template in the banana tab.",

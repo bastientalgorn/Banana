@@ -1,3 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <text x="50%" y="46%" text-anchor="middle" dominant-baseline="central" font-size="352" font-family="Segoe UI Emoji, Noto Color Emoji, Apple Color Emoji, sans-serif">🍌</text>
+  <foreignObject x="0" y="0" width="512" height="512">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="width:512px;height:512px;display:flex;align-items:center;justify-content:center;font-size:387px;line-height:1;font-family:'Segoe UI Emoji','Noto Color Emoji','Apple Color Emoji',sans-serif;transform:translateY(-37px);">🍌</div>
+  </foreignObject>
 </svg>
