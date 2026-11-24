@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.20.2",
+    date: "2026-11-24",
+    summary: "Fixed a bug from the previous back-button change: closing an entry/template/weight edit window via Save, Cancel, or Delete sometimes left the window stuck open (most noticeable when deleting a template in use) because of an internal flag being cleared too early.",
+  },
+  {
     version: "1.20.1",
     date: "2026-11-24",
     summary: "Pressing the device/browser 'back' button while an entry/template/weight edit window is open now just closes that window instead of navigating away from the app. Also re-centered the banana icon artwork.",
@@ -1716,10 +1721,10 @@ function openCalEntryModalForEdit(entry) {
 
 function closeCalEntryModal(fromPopState) {
   if (!fromPopState && modalHistoryActive) {
-    modalHistoryActive = false;
     history.back();
     return;
   }
+  modalHistoryActive = false;
   ui.calEntryForm.reset();
   ui.calEntryId.value = "";
   ui.calItemCal.value = "";
@@ -1745,10 +1750,10 @@ function openTemplateModal(template) {
 
 function closeTemplateModal(fromPopState) {
   if (!fromPopState && modalHistoryActive) {
-    modalHistoryActive = false;
     history.back();
     return;
   }
+  modalHistoryActive = false;
   ui.templateEditForm.reset();
   ui.templateEditId.value = "";
   resetDeleteButton(ui.templateEditDeleteBtn);
@@ -1771,10 +1776,10 @@ function openProgressEditModal(record) {
 
 function closeProgressEditModal(fromPopState) {
   if (!fromPopState && modalHistoryActive) {
-    modalHistoryActive = false;
     history.back();
     return;
   }
+  modalHistoryActive = false;
   ui.progressEditForm.reset();
   ui.progressEditOriginalDate.value = "";
   resetDeleteButton(ui.progressEditDeleteBtn);
@@ -1804,10 +1809,6 @@ function pushModalHistoryState() {
 }
 
 window.addEventListener("popstate", () => {
-  if (!modalHistoryActive) {
-    return;
-  }
-  modalHistoryActive = false;
   if (!ui.calEntryModal.classList.contains("hidden")) {
     closeCalEntryModal(true);
   } else if (!ui.templateModal.classList.contains("hidden")) {
@@ -1815,6 +1816,7 @@ window.addEventListener("popstate", () => {
   } else if (!ui.progressEditModal.classList.contains("hidden")) {
     closeProgressEditModal(true);
   }
+  modalHistoryActive = false;
 });
 
 async function handleDoubleTapDelete(button, onConfirmedDelete) {
