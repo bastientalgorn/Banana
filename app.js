@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.19.26",
+    date: "2026-11-24",
+    summary: "Delete buttons now only stay 'armed' (ready to confirm) for 1 second instead of 2.2; the total calories in the entry form is now left-aligned to match the calories-per-item field above it; and Deep refresh now checks for an internet connection first and shows a message instead of reloading into a broken offline state.",
+  },
+  {
     version: "1.19.25",
     date: "2026-11-23",
     summary: "Banana is now a Progressive Web App (PWA): it can be installed on your device's home screen and works offline, thanks to a new web app manifest and service worker that cache the app's files.",
@@ -901,6 +906,19 @@ async function performDeepRefresh() {
   const button = ui.deepRefreshBtn;
   button.disabled = true;
   if (statusNode) {
+    statusNode.textContent = "Checking internet connection...";
+  }
+
+  const isOnline = await checkInternetConnection();
+  if (!isOnline) {
+    if (statusNode) {
+      statusNode.textContent = "No internet connection. Deep refresh needs to re-download the app, so please try again once you're back online.";
+    }
+    button.disabled = false;
+    return;
+  }
+
+  if (statusNode) {
     statusNode.textContent = "Clearing caches...";
   }
 
@@ -925,6 +943,22 @@ async function performDeepRefresh() {
   const bustedUrl = new URL(window.location.href);
   bustedUrl.searchParams.set("_deepRefresh", String(Date.now()));
   window.location.replace(bustedUrl.toString());
+}
+
+async function checkInternetConnection() {
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    return false;
+  }
+
+  try {
+    const response = await fetch(`${window.location.pathname}?_connCheck=${Date.now()}`, {
+      method: "HEAD",
+      cache: "no-store",
+    });
+    return Boolean(response && (response.ok || response.type === "opaque"));
+  } catch (error) {
+    return false;
+  }
 }
 
 const CLEAR_ALL_HISTORY_PRESSES_REQUIRED = 10;
@@ -1677,7 +1711,7 @@ async function handleDoubleTapDelete(button, onConfirmedDelete) {
   }
   button._deleteArmTimer = setTimeout(() => {
     resetDeleteButton(button);
-  }, 2200);
+  }, 1000);
 }
 
 function resetDeleteButton(button) {

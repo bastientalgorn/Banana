@@ -304,12 +304,15 @@ h3 {
   grid-template-columns: auto minmax(0, 1fr) 50px 50px 50px;
   grid-template-areas:
     "qty-label qty-input qty-plus qty-minus qty-frac"
-    "total-label total-value total-value total-value total-value";
+    "total-row total-row total-row total-row total-row";
 }
 
-.quantity-total-row #cal-quantity,
-.quantity-total-row .total-value {
+.quantity-total-row #cal-quantity {
   width: 100%;
+}
+
+.quantity-total-row .total-value {
+  text-align: left;
 }
 
 .quantity-total-row > :nth-child(1) {
@@ -333,11 +336,13 @@ h3 {
 }
 
 .quantity-total-row > :nth-child(6) {
-  grid-area: total-label;
+  grid-area: total-row;
+  justify-self: end;
 }
 
 .quantity-total-row > :nth-child(7) {
-  grid-area: total-value;
+  grid-area: total-row;
+  justify-self: start;
 }
 
 .date-time-row {
