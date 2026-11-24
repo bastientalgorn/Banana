@@ -11,6 +11,16 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.20.1",
+    date: "2026-11-24",
+    summary: "Pressing the device/browser 'back' button while an entry/template/weight edit window is open now just closes that window instead of navigating away from the app. Also re-centered the banana icon artwork.",
+  },
+  {
+    version: "1.19.30",
+    date: "2026-11-24",
+    summary: "Fixed: deleting a template used by calorie entries is now allowed (entries already snapshot their own name/calories/color, so they keep displaying correctly as '(deleted template)' if needed). Removed the 'Cannot delete a template used by calorie entries' block.",
+  },
+  {
     version: "1.19.29",
     date: "2026-11-24",
     summary: "Added an 'Install webapp on device' button in the Maintenance box (shows up only when your browser offers installing the app, and hides again after use).",
@@ -862,12 +872,9 @@ function bindUiEvents() {
         return;
       }
 
-      const usages = await countCalEntriesForTemplate(id);
-      if (usages > 0) {
-        alert("Cannot delete an template used by calorie entries.");
-        return;
-      }
-
+      // Entries snapshot their own name/calories/color, so they keep
+      // working fine even after their template is deleted -- no need to
+      // block deletion or re-point anything.
       await deleteRecord(STORE_TEMPLATES, id);
       closeTemplateModal();
       await reloadTemplatesAndRefresh();
@@ -1255,10 +1262,7 @@ async function refreshCalView() {
   let renderedRows = 0;
 
   for (const entry of sortedEntries) {
-    const template = templateMap[entry.templateId];
-    if (!template) {
-      continue;
-    }
+    const template = templateMap[entry.templateId] || null;
 
     const lineTotal = getEntryCalPerItem(entry, template) * parseQuantityValue(entry.quantity);
     if (entry.date === today) {
@@ -1273,7 +1277,7 @@ async function refreshCalView() {
       ui.calEntryList.appendChild(headerNode);
     }
 
-    const displayName = entry.customName || template.name;
+    const displayName = entry.customName || template?.name || "(deleted template)";
     const createdTime = entry.createdAt || "--:--";
 
     const itemNode = document.createElement("li");
@@ -1673,6 +1677,7 @@ function openCalEntryModalForCreate(prefill = null) {
   refreshCalModalComputedFields();
   ui.calEntryModal.classList.remove("hidden");
   updateBodyModalState();
+  pushModalHistoryState();
   // Only auto-focus the name field (and its suggestion dropdown) for a
   // brand-new blank entry. When duplicating an existing entry (prefill is
   // set), the name is already filled in, and auto-focusing would pop open
@@ -1700,6 +1705,7 @@ function openCalEntryModalForEdit(entry) {
   refreshCalModalComputedFields();
   ui.calEntryModal.classList.remove("hidden");
   updateBodyModalState();
+  pushModalHistoryState();
   // Don't auto-focus the name field here -- it's already filled in, and
   // focusing it would pop open the suggestions dropdown over the rest of
   // the form (same reasoning as the "copy entry" case).
@@ -1708,7 +1714,12 @@ function openCalEntryModalForEdit(entry) {
   }
 }
 
-function closeCalEntryModal() {
+function closeCalEntryModal(fromPopState) {
+  if (!fromPopState && modalHistoryActive) {
+    modalHistoryActive = false;
+    history.back();
+    return;
+  }
   ui.calEntryForm.reset();
   ui.calEntryId.value = "";
   ui.calItemCal.value = "";
@@ -1728,10 +1739,16 @@ function openTemplateModal(template) {
   resetDeleteButton(ui.templateEditDeleteBtn);
   ui.templateModal.classList.remove("hidden");
   updateBodyModalState();
+  pushModalHistoryState();
   ui.templateEditName.focus();
 }
 
-function closeTemplateModal() {
+function closeTemplateModal(fromPopState) {
+  if (!fromPopState && modalHistoryActive) {
+    modalHistoryActive = false;
+    history.back();
+    return;
+  }
   ui.templateEditForm.reset();
   ui.templateEditId.value = "";
   resetDeleteButton(ui.templateEditDeleteBtn);
@@ -1748,10 +1765,16 @@ function openProgressEditModal(record) {
   resetDeleteButton(ui.progressEditDeleteBtn);
   ui.progressEditModal.classList.remove("hidden");
   updateBodyModalState();
+  pushModalHistoryState();
   ui.progressEditWeight.focus();
 }
 
-function closeProgressEditModal() {
+function closeProgressEditModal(fromPopState) {
+  if (!fromPopState && modalHistoryActive) {
+    modalHistoryActive = false;
+    history.back();
+    return;
+  }
   ui.progressEditForm.reset();
   ui.progressEditOriginalDate.value = "";
   resetDeleteButton(ui.progressEditDeleteBtn);
@@ -1766,6 +1789,33 @@ function updateBodyModalState() {
     !ui.progressEditModal.classList.contains("hidden");
   document.body.classList.toggle("modal-open", hasVisibleModal);
 }
+
+// Make the OS/browser "back" button close an open modal instead of
+// navigating away from the app. Each open*Modal() pushes a dummy history
+// entry; pressing back pops it (firing popstate) which we intercept to
+// close the modal instead of actually leaving the page.
+let modalHistoryActive = false;
+
+function pushModalHistoryState() {
+  if (!modalHistoryActive) {
+    modalHistoryActive = true;
+    history.pushState({ bananaModal: true }, "");
+  }
+}
+
+window.addEventListener("popstate", () => {
+  if (!modalHistoryActive) {
+    return;
+  }
+  modalHistoryActive = false;
+  if (!ui.calEntryModal.classList.contains("hidden")) {
+    closeCalEntryModal(true);
+  } else if (!ui.templateModal.classList.contains("hidden")) {
+    closeTemplateModal(true);
+  } else if (!ui.progressEditModal.classList.contains("hidden")) {
+    closeProgressEditModal(true);
+  }
+});
 
 async function handleDoubleTapDelete(button, onConfirmedDelete) {
   if (button.dataset.armedDelete === "true") {
