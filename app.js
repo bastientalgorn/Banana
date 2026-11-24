@@ -11,6 +11,16 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.20.5",
+    date: "2026-11-24",
+    summary: "Moved the 'Advanced' box between Targets and Create Template in the banana tab.",
+  },
+  {
+    version: "1.20.4",
+    date: "2026-11-24",
+    summary: "Banana icon: transparent background, banana artwork 10% bigger. The icon tab button is now 60% bigger and turns light blue (matching other buttons) instead of yellow when selected.",
+  },
+  {
     version: "1.20.3",
     date: "2026-11-24",
     summary: "Replaced the 'Data' tab button with a small banana icon (Track and Progress now take up the full width); renamed its 'Maintenance' box to 'Advanced' and moved it below Targets/Create Template.",

@@ -123,6 +123,11 @@ body {
   background: var(--accent);
 }
 
+.tab-icon-button.active {
+  border-color: var(--accent-2);
+  background: var(--accent-2);
+}
+
 .tab-icon-button {
   display: flex;
   align-items: center;
@@ -132,8 +137,8 @@ body {
 }
 
 .tab-icon-image {
-  width: 22px;
-  height: 22px;
+  width: 35px;
+  height: 35px;
   border-radius: 6px;
   display: block;
 }

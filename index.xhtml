@@ -13,7 +13,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Banana" />
-  <link rel="stylesheet" href="styles.css?v=20261124c" />
+  <link rel="stylesheet" href="styles.css?v=20261124d" />
 </head>
 <body>
   <div id="app-loading-overlay" class="app-loading-overlay">
@@ -75,6 +75,22 @@
         </div>
 
         <div class="card">
+          <div class="card-header-row">
+            <h2>Advanced</h2>
+            <button id="maintenance-toggle-btn" type="button" class="small-inline-button" aria-expanded="true" aria-controls="maintenance-body">Hide</button>
+          </div>
+          <div id="maintenance-body">
+            <button id="install-app-btn" type="button" class="hidden">Install webapp on device</button>
+            <p id="install-app-status" class="field-hint"></p>
+            <button id="deep-refresh-btn" type="button" class="danger">Deep refresh app</button>
+            <p id="deep-refresh-status" class="field-hint"></p>
+            <button id="clear-all-history-btn" type="button" class="danger">Clear all history</button>
+            <p id="clear-all-history-status" class="field-hint"></p>
+            <ul id="changelog-list" class="changelog-list"></ul>
+          </div>
+        </div>
+
+        <div class="card">
           <h2>Create Template</h2>
           <form id="template-form">
             <label for="template-name">Name</label>
@@ -94,22 +110,6 @@
           <h2>Templates</h2>
           <input id="template-search" type="text" placeholder="Search templates" autocomplete="off" />
           <ul id="template-list" class="list"></ul>
-        </div>
-
-        <div class="card">
-          <div class="card-header-row">
-            <h2>Advanced</h2>
-            <button id="maintenance-toggle-btn" type="button" class="small-inline-button" aria-expanded="true" aria-controls="maintenance-body">Hide</button>
-          </div>
-          <div id="maintenance-body">
-            <button id="install-app-btn" type="button" class="hidden">Install webapp on device</button>
-            <p id="install-app-status" class="field-hint"></p>
-            <button id="deep-refresh-btn" type="button" class="danger">Deep refresh app</button>
-            <p id="deep-refresh-status" class="field-hint"></p>
-            <button id="clear-all-history-btn" type="button" class="danger">Clear all history</button>
-            <p id="clear-all-history-status" class="field-hint"></p>
-            <ul id="changelog-list" class="changelog-list"></ul>
-          </div>
         </div>
       </section>
     </main>
@@ -226,7 +226,7 @@
   </div>
 
   <script src="food_seed_data.js?v=20261124b" type="application/javascript"></script>
-  <script src="app.js?v=20261124h" type="application/javascript"></script>
+  <script src="app.js?v=20261124j" type="application/javascript"></script>
   <script type="application/javascript">
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", function () {
