@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.20.3",
+    date: "2026-11-24",
+    summary: "Replaced the 'Data' tab button with a small banana icon (Track and Progress now take up the full width); renamed its 'Maintenance' box to 'Advanced' and moved it below Targets/Create Template.",
+  },
+  {
     version: "1.20.2",
     date: "2026-11-24",
     summary: "Fixed a bug from the previous back-button change: closing an entry/template/weight edit window via Save, Cancel, or Delete sometimes left the window stuck open (most noticeable when deleting a template in use) because of an internal flag being cleared too early.",
