@@ -302,47 +302,21 @@ h3 {
 
 .quantity-total-row {
   grid-template-columns: auto minmax(0, 1fr) 50px 50px 50px;
-  grid-template-areas:
-    "qty-label qty-input qty-plus qty-minus qty-frac"
-    "total-row total-row total-row total-row total-row";
 }
 
 .quantity-total-row #cal-quantity {
   width: 100%;
 }
 
-.quantity-total-row .total-value {
+.total-calories-line {
+  margin: 0.45rem 0 0;
   text-align: left;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
-.quantity-total-row > :nth-child(1) {
-  grid-area: qty-label;
-}
-
-.quantity-total-row > :nth-child(2) {
-  grid-area: qty-input;
-}
-
-.quantity-total-row > :nth-child(3) {
-  grid-area: qty-plus;
-}
-
-.quantity-total-row > :nth-child(4) {
-  grid-area: qty-minus;
-}
-
-.quantity-total-row > :nth-child(5) {
-  grid-area: qty-frac;
-}
-
-.quantity-total-row > :nth-child(6) {
-  grid-area: total-row;
-  justify-self: end;
-}
-
-.quantity-total-row > :nth-child(7) {
-  grid-area: total-row;
-  justify-self: start;
+.total-calories-line #cal-total-calories {
+  font-weight: 700;
 }
 
 .date-time-row {

@@ -11,6 +11,16 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.19.28",
+    date: "2026-11-24",
+    summary: "Fixed a typo: 'Calory per item' is now 'Calories per item' in the entry form placeholder and error messages.",
+  },
+  {
+    version: "1.19.27",
+    date: "2026-11-24",
+    summary: "Total calories in the entry form is now a plain left-aligned text line ('Total calories: 1200 kcal') below the quantity row, instead of a boxed value that could misalign; shows '0 kcal' when not yet computable.",
+  },
+  {
     version: "1.19.26",
     date: "2026-11-24",
     summary: "Delete buttons now only stay 'armed' (ready to confirm) for 1 second instead of 2.2; the total calories in the entry form is now left-aligned to match the calories-per-item field above it; and Deep refresh now checks for an internet connection first and shows a message instead of reloading into a broken offline state.",
@@ -1642,7 +1652,7 @@ function closeCalEntryModal() {
   ui.calEntryForm.reset();
   ui.calEntryId.value = "";
   ui.calItemCal.value = "";
-  ui.calTotalCalories.textContent = "--";
+  ui.calTotalCalories.textContent = "0";
   ui.calEntrySubmitBtn.disabled = false;
   resetDeleteButton(ui.calEntryDeleteBtn);
   ui.calEntryModal.classList.add("hidden");
@@ -1832,7 +1842,7 @@ function refreshCalModalComputedFields() {
   if (hasValidQuantity && hasValidCalories) {
     ui.calTotalCalories.textContent = formatCal(caloriesPerItem * quantity);
   } else {
-    ui.calTotalCalories.textContent = "--";
+    ui.calTotalCalories.textContent = "0";
   }
 
   const canSubmit =
@@ -1865,12 +1875,12 @@ function toggleInputSign(inputElement) {
 function parseCaloryPerItemInput(rawValue) {
   const valueText = String(rawValue || "").trim();
   if (!valueText) {
-    throw new Error("Calory per item is required.");
+    throw new Error("Calories per item is required.");
   }
 
   const value = Number(valueText);
   if (!Number.isFinite(value)) {
-    throw new Error("Calory per item must be numeric.");
+    throw new Error("Calories per item must be numeric.");
   }
 
   return value;

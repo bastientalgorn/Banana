@@ -13,7 +13,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Banana" />
-  <link rel="stylesheet" href="styles.css?v=20261124a" />
+  <link rel="stylesheet" href="styles.css?v=20261124b" />
 </head>
 <body>
   <div id="app-loading-overlay" class="app-loading-overlay">
@@ -132,7 +132,7 @@
         </div>
 
         <div class="type-row">
-          <input id="cal-item-cal" type="text" inputmode="decimal" pattern="-?[0-9]*\.?[0-9]*" placeholder="Calory per item" />
+          <input id="cal-item-cal" type="text" inputmode="decimal" pattern="-?[0-9]*\.?[0-9]*" placeholder="Calories per item" />
           <button id="cal-item-cal-sign-btn" type="button" class="qty-adjust-button" aria-label="Toggle positive/negative">±</button>
         </div>
 
@@ -142,9 +142,9 @@
           <button id="qty-plus-btn" type="button" class="qty-adjust-button" aria-label="Increase quantity">+</button>
           <button id="qty-minus-btn" type="button" class="qty-adjust-button" aria-label="Decrease quantity">-</button>
           <button id="qty-fraction-btn" type="button" class="qty-adjust-button" aria-label="Convert to 1/x fraction" title="Convert to 1/x">1/x</button>
-          <span class="quantity-label total-label">Total calories</span>
-          <span id="cal-total-calories" class="total-value">--</span>
         </div>
+
+        <p id="cal-total-calories-line" class="total-calories-line">Total calories: <span id="cal-total-calories">0</span> kcal</p>
 
         <div class="quantity-row date-time-row">
           <input id="cal-entry-date" type="date" required="required" />
@@ -222,7 +222,7 @@
   </div>
 
   <script src="food_seed_data.js?v=20261124b" type="application/javascript"></script>
-  <script src="app.js?v=20261124a" type="application/javascript"></script>
+  <script src="app.js?v=20261124c" type="application/javascript"></script>
   <script type="application/javascript">
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", function () {
