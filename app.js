@@ -11,6 +11,11 @@ const DEFAULT_DAILY_CALORIE_TARGET = 2000;
 const DEFAULT_WEIGHT_TARGET = 150;
 const APP_CHANGELOG = [
   {
+    version: "1.19.29",
+    date: "2026-11-24",
+    summary: "Added an 'Install webapp on device' button in the Maintenance box (shows up only when your browser offers installing the app, and hides again after use).",
+  },
+  {
     version: "1.19.28",
     date: "2026-11-24",
     summary: "Fixed a typo: 'Calory per item' is now 'Calories per item' in the entry form placeholder and error messages.",
@@ -264,6 +269,7 @@ const state = {
   templateUsage: new Map(),
   calDropdownSuggestions: [],
   calDropdownActiveIndex: -1,
+  deferredInstallPrompt: null,
 };
 
 const ui = {
@@ -343,6 +349,8 @@ const ui = {
   templateEditColorPickerRow: document.getElementById("template-edit-color-picker-row"),
   deepRefreshBtn: document.getElementById("deep-refresh-btn"),
   deepRefreshStatus: document.getElementById("deep-refresh-status"),
+  installAppBtn: document.getElementById("install-app-btn"),
+  installAppStatus: document.getElementById("install-app-status"),
   clearAllHistoryBtn: document.getElementById("clear-all-history-btn"),
   clearAllHistoryStatus: document.getElementById("clear-all-history-status"),
   changelogList: document.getElementById("changelog-list"),
@@ -356,6 +364,24 @@ function setLoadingStatus(message) {
     ui.appLoadingStatus.textContent = message;
   }
 }
+
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  state.deferredInstallPrompt = event;
+  if (ui.installAppBtn) {
+    ui.installAppBtn.classList.remove("hidden");
+  }
+});
+
+window.addEventListener("appinstalled", () => {
+  state.deferredInstallPrompt = null;
+  if (ui.installAppBtn) {
+    ui.installAppBtn.classList.add("hidden");
+  }
+  if (ui.installAppStatus) {
+    ui.installAppStatus.textContent = "App installed.";
+  }
+});
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -773,6 +799,10 @@ function bindUiEvents() {
     void performDeepRefresh();
   });
 
+  ui.installAppBtn.addEventListener("click", () => {
+    void handleInstallAppClick();
+  });
+
   ui.clearAllHistoryBtn.addEventListener("click", () => {
     void handleClearAllHistoryClick();
   });
@@ -968,6 +998,36 @@ async function checkInternetConnection() {
     return Boolean(response && (response.ok || response.type === "opaque"));
   } catch (error) {
     return false;
+  }
+}
+
+async function handleInstallAppClick() {
+  const statusNode = ui.installAppStatus;
+  const promptEvent = state.deferredInstallPrompt;
+
+  if (!promptEvent) {
+    if (statusNode) {
+      statusNode.textContent = "Install isn't available right now (it may already be installed, or your browser doesn't support it).";
+    }
+    return;
+  }
+
+  ui.installAppBtn.disabled = true;
+  try {
+    await promptEvent.prompt();
+    const choice = await promptEvent.userChoice;
+    if (statusNode) {
+      statusNode.textContent = choice.outcome === "accepted" ? "Installing..." : "Install dismissed.";
+    }
+  } catch (error) {
+    console.error("Install prompt failed", error);
+    if (statusNode) {
+      statusNode.textContent = "Install prompt failed.";
+    }
+  } finally {
+    state.deferredInstallPrompt = null;
+    ui.installAppBtn.classList.add("hidden");
+    ui.installAppBtn.disabled = false;
   }
 }
 
